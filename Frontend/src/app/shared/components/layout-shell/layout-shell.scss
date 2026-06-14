@@ -1,0 +1,49 @@
+.layout-container {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  background-color: var(--color-bg-surface);
+}
+
+.layout-sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  height: 100%;
+  background-color: var(--color-primary);
+  color: var(--color-text-inverse);
+  transition: width var(--transition-base);
+  z-index: 10;
+}
+
+.layout-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.layout-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-6);
+}
+
+@media (max-width: 1024px) {
+  .layout-sidebar {
+    width: 80px; /* Collapsed state on smaller screens */
+  }
+}
+
+@media (max-width: 768px) {
+  .layout-sidebar {
+    position: fixed;
+    transform: translateX(-100%);
+  }
+  
+  /* Add logic for toggled state later */
+  .layout-sidebar.is-open {
+    transform: translateX(0);
+  }
+}

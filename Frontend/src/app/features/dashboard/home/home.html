@@ -1,0 +1,134 @@
+<!-- SUPER ADMIN DASHBOARD -->
+<ng-container *ngIf="isSuperAdmin() && stats">
+  <div class="dash-page-header">
+    <div class="dash-header-left">
+      <div class="dash-header-icon">
+        <span class="material-symbols-outlined">dashboard_customize</span>
+      </div>
+      <div>
+        <h1 class="dash-page-title">Dashboard Stratégique</h1>
+        <p class="dash-page-subtitle">Aperçu en temps réel des performances et de l'organisation</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="dash-kpi-grid">
+    <app-kpi-card
+      title="Total Utilisateurs"
+      [value]="stats.totalUsers.toString()"
+      icon="group"
+      trendValue="Comptes créés"
+      trendDirection="neutral"
+      colorClass="blue">
+    </app-kpi-card>
+    <app-kpi-card
+      title="Départements"
+      [value]="stats.totalDepartments.toString()"
+      icon="domain"
+      trendValue="Actifs"
+      trendDirection="neutral"
+      colorClass="gold">
+    </app-kpi-card>
+    <app-kpi-card
+      title="Connexions Aujourd'hui"
+      [value]="stats.activeUsersToday.toString()"
+      icon="bolt"
+      trendValue="Activité journalière"
+      trendDirection="up"
+      colorClass="success">
+    </app-kpi-card>
+    <app-kpi-card
+      title="En Attente"
+      [value]="stats.pendingUsersCount.toString()"
+      icon="pending_actions"
+      trendValue="À valider"
+      trendDirection="danger"
+      colorClass="danger">
+    </app-kpi-card>
+  </div>
+
+  <div class="dash-charts-row">
+    <div class="dash-chart-card">
+      <div class="card-header">
+        <h2>Répartition par Département</h2>
+      </div>
+      <div class="card-body">
+        <div echarts [options]="deptChartOptions" class="chart-container"></div>
+      </div>
+    </div>
+
+    <div class="dash-chart-card">
+      <div class="card-header">
+        <h2>Distribution des Rôles</h2>
+      </div>
+      <div class="card-body">
+        <div echarts [options]="roleChartOptions" class="chart-container"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dash-lists-row">
+    <div class="dash-list-card">
+      <div class="card-header border-gold">
+        <h2><span class="material-symbols-outlined text-gold">military_tech</span> Top Rendement / Activité</h2>
+      </div>
+      <div class="card-body p-0">
+        <div class="leaderboard-list">
+          <div class="leaderboard-item" *ngFor="let user of stats.topUsers; let i = index">
+            <div class="rank">{{ i + 1 }}</div>
+            <div class="avatar">
+              <img *ngIf="user.profilePictureUrl" [src]="user.profilePictureUrl" alt="avatar">
+              <span *ngIf="!user.profilePictureUrl">{{ user.fullName.charAt(0) }}</span>
+            </div>
+            <div class="user-info">
+              <h4>{{ user.fullName }}</h4>
+              <p>{{ user.role }} • {{ user.departmentName }}</p>
+            </div>
+            <div class="activity-score">
+              <div class="score-bar-bg">
+                <div class="score-bar-fill" [style.width]="user.activityScore + '%'"></div>
+              </div>
+              <span>{{ user.activityScore }}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-list-card">
+      <div class="card-header border-danger">
+        <h2><span class="material-symbols-outlined text-danger">hourglass_empty</span> Utilisateurs en Attente</h2>
+      </div>
+      <div class="card-body p-0">
+        <div class="pending-list" *ngIf="stats.pendingUsers.length > 0; else noPending">
+          <div class="pending-item" *ngFor="let user of stats.pendingUsers">
+            <div class="user-info">
+              <h4>{{ user.fullName }}</h4>
+              <p>{{ user.email }}</p>
+            </div>
+            <div class="user-meta">
+              <span class="badge">{{ user.departmentName }}</span>
+              <span class="date">{{ user.requestedAt | date:'mediumDate' }}</span>
+            </div>
+          </div>
+        </div>
+        <ng-template #noPending>
+          <div class="empty-state">
+            <span class="material-symbols-outlined">check_circle</span>
+            <p>Aucun utilisateur en attente de validation.</p>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+</ng-container>
+
+<!-- CHEF DASHBOARD -->
+<ng-container *ngIf="isChef()">
+  <app-chef-dashboard></app-chef-dashboard>
+</ng-container>
+
+<!-- EMPLOYE DASHBOARD -->
+<ng-container *ngIf="isEmploye()">
+  <app-employe-dashboard></app-employe-dashboard>
+</ng-container>

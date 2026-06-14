@@ -1,0 +1,19 @@
+<div class="kpi-card" [ngClass]="'status-' + statusColor">
+  <div class="kpi-header">
+    <div class="kpi-title">{{ title }}</div>
+    <div class="kpi-icon" [ngClass]="'icon-' + statusColor">
+      <span class="material-symbols-outlined">{{ icon }}</span>
+    </div>
+  </div>
+  
+  <div class="kpi-body">
+    <div class="kpi-value">{{ value }}</div>
+    
+    <div class="kpi-trend" *ngIf="trendValue" [ngClass]="'trend-' + trend">
+      <span class="material-symbols-outlined trend-icon">
+        {{ trend === 'up' ? 'trending_up' : trend === 'down' ? 'trending_down' : 'remove' }}
+      </span>
+      <span class="trend-text">{{ trendValue }}</span>
+    </div>
+  </div>
+</div>

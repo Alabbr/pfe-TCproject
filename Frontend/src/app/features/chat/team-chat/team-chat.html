@@ -1,0 +1,316 @@
+<div class="chat-layout">
+  <!-- Left Column: Navigation -->
+  <div class="chat-nav">
+    <div class="chat-search">
+      <span class="material-symbols-outlined search-icon">search</span>
+      <input type="text" placeholder="Rechercher...">
+    </div>
+
+    <div class="nav-section">
+      <div class="section-header">
+        <span class="section-title">CANAUX</span>
+        <button class="icon-btn-small"><span class="material-symbols-outlined">add</span></button>
+      </div>
+      <div class="nav-list">
+        <div class="nav-item" 
+             *ngFor="let channel of channels" 
+             [class.active]="activeItemType === 'channel' && activeItemId === channel.id"
+             (click)="selectChannel(channel.id)">
+          <div class="item-content">
+            <span class="hash">#</span>
+            <span class="name">{{ channel.name }}</span>
+          </div>
+          <span class="badge" *ngIf="channel.unread > 0">{{ channel.unread }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="section-header">
+        <span class="section-title">MESSAGES DIRECTS</span>
+        <button class="icon-btn-small"><span class="material-symbols-outlined">add</span></button>
+      </div>
+      <div class="nav-list">
+        <div class="nav-item" 
+             *ngFor="let dm of directMessages"
+             [class.active]="activeItemType === 'dm' && activeItemId === dm.id"
+             (click)="selectDM(dm.id)">
+          <div class="item-content">
+            <div class="avatar-wrapper">
+              <img *ngIf="dm.profilePictureUrl" [src]="dm.profilePictureUrl" class="avatar-img" alt="avatar">
+              <div *ngIf="!dm.profilePictureUrl" class="avatar" [style.backgroundColor]="dm.color">{{ dm.avatar }}</div>
+              <div class="status-indicator" [class.online]="dm.online"></div>
+            </div>
+            <span class="name">{{ dm.name }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Middle Column: Main Chat Area -->
+  <div class="chat-main">
+    <div class="chat-header">
+      <div class="header-info" *ngIf="activeItemType === 'channel' && activeChannel">
+        <span class="hash-large">#</span>
+        <div class="channel-details">
+          <h2>#{{ activeChannel.name }}</h2>
+          <span class="member-count">{{ members.length }} membres</span>
+        </div>
+      </div>
+
+      <div class="header-info" *ngIf="activeItemType === 'dm' && activeDM">
+        <div class="avatar-wrapper" style="margin-right: 8px;">
+          <img *ngIf="activeDM.profilePictureUrl" [src]="activeDM.profilePictureUrl" class="avatar-img" style="width: 36px; height: 36px;" alt="avatar">
+          <div *ngIf="!activeDM.profilePictureUrl" class="avatar" [style.backgroundColor]="activeDM.color">{{ activeDM.avatar }}</div>
+          <div class="status-indicator" [class.online]="activeDM.online"></div>
+        </div>
+        <div class="channel-details">
+          <h2>{{ activeDM.name }}</h2>
+          <span class="member-count">{{ activeDM.online ? 'En ligne' : 'Hors ligne' }}</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button class="icon-btn"><span class="material-symbols-outlined">call</span></button>
+        <button class="icon-btn"><span class="material-symbols-outlined">videocam</span></button>
+        <button class="icon-btn"><span class="material-symbols-outlined">more_vert</span></button>
+      </div>
+    </div>
+
+    <div class="chat-messages">
+      <div class="channel-intro" *ngIf="activeItemType === 'channel' && activeChannel">
+        <div class="intro-icon">#</div>
+        <h2>#{{ activeChannel.name }}</h2>
+        <p>{{ activeChannel.desc }}</p>
+      </div>
+
+      <div class="channel-intro" *ngIf="activeItemType === 'dm' && activeDM">
+        <div class="intro-icon" style="background-color: transparent;">
+          <div class="avatar" style="width: 64px; height: 64px; font-size: 24px;" [style.backgroundColor]="activeDM.color">{{ activeDM.avatar }}</div>
+        </div>
+        <h2>{{ activeDM.name }}</h2>
+        <p>Ceci est le début de votre historique de messages directs avec {{ activeDM.name }}.</p>
+      </div>
+
+
+      <div class="message" *ngFor="let msg of activeMessages" [class.my-message]="msg.senderId === currentUser.userId"
+           (mouseenter)="hoveredMessageId = msg.id!" (mouseleave)="hoveredMessageId = null">
+        <div class="msg-avatar-container" *ngIf="msg.senderId !== currentUser.userId">
+          <img *ngIf="msg.senderAvatarUrl" [src]="msg.senderAvatarUrl" class="avatar-img" alt="avatar">
+          <div *ngIf="!msg.senderAvatarUrl" class="msg-avatar" [style.backgroundColor]="msg.senderColor || '#1A4A8A'">{{ msg.senderAvatar }}</div>
+        </div>
+        <div class="msg-content" [style.alignItems]="msg.senderId === currentUser.userId ? 'flex-end' : 'flex-start'">
+          <div class="msg-header" *ngIf="msg.senderId !== currentUser.userId">
+            <span class="msg-sender">{{ msg.senderName }}</span>
+          </div>
+
+          <!-- Forwarded label -->
+          <div class="forwarded-label" *ngIf="msg.isForwarded">
+            <span class="material-symbols-outlined" style="font-size: 14px;">forward</span>
+            Transféré
+          </div>
+
+          <div class="msg-bubble-wrapper">
+            <div class="msg-bubble" [class.with-attachment]="msg.attachmentUrl" [style.backgroundColor]="msg.senderId === currentUser.userId ? 'var(--color-primary)' : 'white'" [style.color]="msg.senderId === currentUser.userId ? 'white' : 'var(--color-text-main)'">
+              <p *ngIf="msg.content">{{ msg.content }}</p>
+              
+              <!-- Pièces jointes -->
+              <div *ngIf="msg.attachmentUrl" class="attachment-container">
+                <img *ngIf="msg.attachmentType === 'image'" [src]="msg.attachmentUrl" alt="attachment" class="attachment-image" (click)="openImage(msg.attachmentUrl)">
+                
+                <div *ngIf="msg.attachmentType === 'raw'" class="attachment-file" (click)="downloadFile(msg.attachmentUrl)">
+                  <div class="file-icon">
+                    <span class="material-symbols-outlined">description</span>
+                  </div>
+                  <div class="file-details">
+                    <span class="file-name">{{ msg.attachmentName }}</span>
+                    <span class="file-download">Cliquer pour télécharger</span>
+                  </div>
+                  <span class="material-symbols-outlined download-btn-icon">download</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Hover Actions Menu -->
+            <div class="msg-actions" *ngIf="hoveredMessageId === msg.id" [class.actions-left]="msg.senderId === currentUser.userId">
+              <button class="action-btn" title="Réagir" (click)="toggleEmojiPicker(msg.id!)">
+                <span class="material-symbols-outlined">add_reaction</span>
+              </button>
+              <button class="action-btn" *ngIf="msg.senderId === currentUser.userId" title="Modifier" (click)="startEditing(msg)">
+                <span class="material-symbols-outlined">edit</span>
+              </button>
+              <button class="action-btn" title="Transférer" (click)="openForwardModal(msg)">
+                <span class="material-symbols-outlined">forward</span>
+              </button>
+            </div>
+
+            <!-- Emoji Picker -->
+            <div class="emoji-picker" *ngIf="showEmojiPickerForMessageId === msg.id">
+              <button *ngFor="let emoji of availableEmojis" class="emoji-option" (click)="addReaction(msg, emoji)">{{ emoji }}</button>
+            </div>
+          </div>
+
+          <!-- Reactions display -->
+          <div class="reactions-row" *ngIf="getReactionEntries(msg.reactions).length > 0">
+            <button class="reaction-chip" *ngFor="let r of getReactionEntries(msg.reactions)" 
+                    [class.my-reaction]="hasMyReaction(r.userIds)"
+                    (click)="addReaction(msg, r.emoji)">
+              {{ r.emoji }} <span class="reaction-count">{{ r.userIds.length }}</span>
+            </button>
+          </div>
+
+          <span class="msg-time">
+            {{ formatTime(msg.timestamp) }}
+            <span *ngIf="msg.isEdited" class="edited-tag">(modifié)</span>
+            <span *ngIf="msg.senderId === currentUser.userId" class="material-symbols-outlined read-check" 
+                  [class.read]="msg.isRead">
+              done_all
+            </span>
+          </span>
+          <div *ngIf="msg.senderId === currentUser.userId && msg.isRead && msg.readAt" class="seen-time-below">
+            Vu à {{ formatTime(msg.readAt) }}
+          </div>
+        </div>
+      </div>
+      
+      <div class="empty-state" *ngIf="activeMessages.length === 0">
+        <span class="material-symbols-outlined" style="font-size: 48px; color: var(--color-border); margin-bottom: 16px;">tag</span>
+        <p>Aucun message pour le moment.</p>
+        <span style="font-size: 13px; color: var(--color-text-muted);">Soyez le premier à écrire !</span>
+      </div>
+    </div>
+
+    <div class="chat-input-area">
+
+      <!-- Editing banner -->
+      <div class="editing-banner" *ngIf="editingMessageId">
+        <span class="material-symbols-outlined" style="font-size: 18px; color: var(--color-primary);">edit</span>
+        <span>Modification du message...</span>
+        <button class="cancel-edit-btn" (click)="cancelEditing()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      
+      <!-- Preview zone for selected file -->
+      <div class="file-preview-zone" *ngIf="selectedFile">
+        <div class="preview-card">
+          <img *ngIf="selectedFilePreview" [src]="selectedFilePreview" alt="preview" class="preview-image">
+          <div *ngIf="!selectedFilePreview" class="preview-file-icon">
+            <span class="material-symbols-outlined">insert_drive_file</span>
+          </div>
+          <div class="preview-info">
+            <span class="preview-name">{{ selectedFile.name }}</span>
+            <span class="preview-size">{{ (selectedFile.size / 1024).toFixed(1) }} KB</span>
+          </div>
+          <button class="remove-file-btn" (click)="removeSelectedFile()">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="input-container">
+        <input type="file" #fileInput (change)="onFileSelected($event)" hidden>
+        <button class="attach-btn" (click)="fileInput.click()" *ngIf="!editingMessageId"><span class="material-symbols-outlined">attach_file</span></button>
+        <input type="text" [(ngModel)]="newMessageText" 
+               (keyup.enter)="editingMessageId ? submitEdit() : sendMessage()" 
+               [placeholder]="editingMessageId ? 'Modifier le message...' : (activeItemType === 'channel' ? 'Message dans #' + activeChannel?.name + '...' : 'Message à ' + activeDM?.name + '...')" 
+               [disabled]="isUploading">
+        <button class="emoji-btn"><span class="material-symbols-outlined">mood</span></button>
+        <button class="send-btn" (click)="editingMessageId ? submitEdit() : sendMessage()" [disabled]="isUploading">
+          <span *ngIf="!isUploading && !editingMessageId" class="material-symbols-outlined">send</span>
+          <span *ngIf="!isUploading && editingMessageId" class="material-symbols-outlined">check</span>
+          <span *ngIf="isUploading" class="material-symbols-outlined spinning-icon">hourglass_empty</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Forward Modal -->
+  <div class="forward-modal-overlay" *ngIf="showForwardModal" (click)="closeForwardModal()">
+    <div class="forward-modal" (click)="$event.stopPropagation()">
+      <div class="forward-modal-header">
+        <h3>Transférer le message</h3>
+        <button class="close-modal-btn" (click)="closeForwardModal()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div class="forward-modal-body">
+        <div class="forward-section-title">Canaux</div>
+        <div class="forward-item" *ngFor="let ch of channels" (click)="forwardTo('channel', ch.id)">
+          <span class="hash">#</span>
+          <span>{{ ch.name }}</span>
+        </div>
+        <div class="forward-section-title">Messages Directs</div>
+        <div class="forward-item" *ngFor="let dm of directMessages" (click)="forwardTo('dm', dm.id)">
+          <div class="avatar-wrapper" style="width: 24px; height: 24px;">
+            <img *ngIf="dm.profilePictureUrl" [src]="dm.profilePictureUrl" class="avatar-img" alt="avatar">
+            <div *ngIf="!dm.profilePictureUrl" class="avatar" [style.backgroundColor]="dm.color">{{ dm.avatar }}</div>
+          </div>
+          <span>{{ dm.name }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column: Details Panel -->
+  <div class="chat-details">
+    <div class="details-header">
+      <h3>Détails {{ activeItemType === 'channel' ? 'du canal' : 'du profil' }}</h3>
+    </div>
+    
+    <div class="details-section" *ngIf="activeItemType === 'channel' && activeChannel">
+      <div class="section-title">SUJET</div>
+      <p class="subject-text">{{ activeChannel.desc }}</p>
+    </div>
+
+    <div class="details-section" *ngIf="activeItemType === 'channel'">
+      <div class="section-title">MEMBRES ({{ members.length }})</div>
+      <div class="members-list">
+        <div class="member-item" *ngFor="let member of members">
+          <div class="avatar-wrapper">
+            <img *ngIf="member.profilePictureUrl" [src]="member.profilePictureUrl" class="avatar-img" alt="avatar">
+            <div *ngIf="!member.profilePictureUrl" class="avatar" [style.backgroundColor]="member.color">{{ member.avatar }}</div>
+            <div class="status-indicator" [class.online]="member.online"></div>
+          </div>
+          <div class="member-info">
+            <span class="name">{{ member.name }}</span>
+            <span class="role" *ngIf="member.role === 'Admin'">Admin</span>
+            <span class="role-muted" *ngIf="member.role !== 'Admin'">{{ member.role }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="details-section" *ngIf="activeItemType === 'dm' && activeDM">
+      <div class="section-title">INFORMATIONS</div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 16px; margin-bottom: 16px;">
+        <img *ngIf="activeDM.profilePictureUrl" [src]="activeDM.profilePictureUrl" class="avatar-img" style="width: 80px; height: 80px;" alt="avatar">
+        <div *ngIf="!activeDM.profilePictureUrl" class="avatar" style="width: 80px; height: 80px; font-size: 28px;" [style.backgroundColor]="activeDM.color">{{ activeDM.avatar }}</div>
+        <div style="text-align: center;">
+          <div style="font-weight: 600; font-size: 16px;">{{ activeDM.name }}</div>
+          <div style="font-size: 13px; color: var(--color-text-muted);">{{ activeDM.role }}</div>
+        </div>
+      </div>
+      <div class="btn-outline" style="display: flex; justify-content: center; margin-top: 16px; cursor: pointer;">
+        Voir le profil complet
+      </div>
+    </div>
+
+    <!-- Section Fichiers Partagés -->
+    <div class="details-section">
+      <div class="section-title">FICHIERS PARTAGÉS</div>
+      <div class="shared-files-list">
+        <div class="shared-file-item" *ngFor="let file of getSharedFiles()" (click)="file.type === 'image' ? openImage(file.url) : downloadFile(file.url)">
+           <span class="material-symbols-outlined file-icon-small">
+              {{ file.type === 'image' ? 'image' : 'description' }}
+           </span>
+           <span class="file-name-small" [title]="file.name">{{ file.name }}</span>
+        </div>
+        <div *ngIf="getSharedFiles().length === 0" style="font-size: 12px; color: var(--color-text-muted); text-align: center; margin-top: 8px;">
+          Aucun fichier partagé.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,107 @@
+<header class="topbar">
+  <div class="topbar-left">
+    <div class="search-bar">
+      <span class="material-symbols-outlined search-icon">search</span>
+      <input type="text" placeholder="Rechercher partout..." class="search-input">
+      <div class="search-shortcut">
+        <span class="cmd-key">⌘</span>K
+      </div>
+    </div>
+  </div>
+
+  <div class="topbar-right">
+    <!-- Theme Toggle -->
+    <button class="icon-btn" aria-label="Changer le thème" (click)="toggleTheme()">
+      <span class="material-symbols-outlined" *ngIf="!isDarkMode">dark_mode</span>
+      <span class="material-symbols-outlined" *ngIf="isDarkMode">light_mode</span>
+    </button>
+
+    <div class="notifications-container">
+      <button class="icon-btn" aria-label="Notifications" (click)="toggleNotifications()">
+        <span class="material-symbols-outlined">notifications</span>
+        <span class="badge" *ngIf="unreadMessages.length > 0">{{ unreadMessages.length }}</span>
+      </button>
+
+      <div class="dropdown-menu notifications-menu" *ngIf="isNotificationsOpen">
+        <div class="dropdown-header">
+          <div class="name">Notifications</div>
+          <div class="role" *ngIf="unreadMessages.length > 0">{{ unreadMessages.length }} nouveau(x) message(s)</div>
+        </div>
+        <div class="dropdown-divider"></div>
+        
+        <div class="empty-notifications" *ngIf="unreadMessages.length === 0">
+          Aucune nouvelle notification
+        </div>
+
+        <div class="notification-list" *ngIf="unreadMessages.length > 0">
+          <div class="notification-item" *ngFor="let msg of unreadMessages" (click)="goToChat(msg)">
+            <div class="notif-avatar">
+              <img *ngIf="msg.senderAvatarUrl" [src]="msg.senderAvatarUrl" alt="avatar">
+              <div *ngIf="!msg.senderAvatarUrl" class="avatar-placeholder" [style.backgroundColor]="msg.senderColor || '#1A4A8A'">
+                {{ msg.senderAvatar }}
+              </div>
+            </div>
+            <div class="notif-content">
+              <div class="notif-sender">{{ msg.senderName }}</div>
+              <div class="notif-text">{{ msg.content || 'A envoyé un message' }}</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="dropdown-divider" *ngIf="unreadMessages.length > 0"></div>
+        <button class="dropdown-item text-primary" style="justify-content: center;" *ngIf="unreadMessages.length > 0" (click)="goToChat()">
+          Voir tous les messages
+        </button>
+      </div>
+    </div>
+    <button class="icon-btn" aria-label="Paramètres" *ngIf="currentUser?.role === 'SUPER_ADMIN'" (click)="openSettingsModal()">
+      <span class="material-symbols-outlined">settings</span>
+    </button>
+    <div class="divider"></div>
+    
+    <div class="profile-menu-container">
+      <button class="profile-btn" (click)="toggleProfileMenu()">
+        <div class="avatar-small">
+          <img *ngIf="currentUser?.profilePictureUrl" [src]="currentUser?.profilePictureUrl" alt="Avatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+          <span *ngIf="!currentUser?.profilePictureUrl" class="material-symbols-outlined">person</span>
+        </div>
+      </button>
+      
+      <div class="dropdown-menu" *ngIf="isProfileMenuOpen && currentUser">
+        <div class="dropdown-header">
+          <div class="name">{{ currentUser.fullName }}</div>
+          <div class="role">{{ currentUser.role.replace('_', ' ') }}</div>
+        </div>
+        <div class="dropdown-divider"></div>
+        <button class="dropdown-item" (click)="openProfileModal()">
+          <span class="material-symbols-outlined">person</span>
+          Mon Profil
+        </button>
+        <button class="dropdown-item">
+          <span class="material-symbols-outlined">settings</span>
+          Préférences
+        </button>
+        <div class="dropdown-divider"></div>
+        <button class="dropdown-item text-danger" (click)="logout()">
+          <span class="material-symbols-outlined">logout</span>
+          Déconnexion
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Backdrop to close the menu when clicking outside -->
+  <div class="menu-backdrop" *ngIf="isProfileMenuOpen" (click)="toggleProfileMenu()"></div>
+</header>
+
+<app-profile-modal 
+  [isOpen]="isProfileModalOpen" 
+  [userId]="currentUser?.userId || null"
+  (closeEvent)="closeProfileModal()"
+  (userUpdated)="onProfileUpdated($event)">
+</app-profile-modal>
+
+<app-settings-modal
+  [isOpen]="isSettingsModalOpen"
+  (closeEvent)="closeSettingsModal()">
+</app-settings-modal>

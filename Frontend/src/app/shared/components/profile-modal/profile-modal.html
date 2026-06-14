@@ -1,0 +1,90 @@
+<div class="modal-backdrop" *ngIf="isOpen" (click)="close()">
+  <div class="modal-content glass-effect" (click)="$event.stopPropagation()">
+    <button class="close-btn" (click)="close()">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+
+    <!-- Loading state -->
+    <div class="loading-state" *ngIf="isLoading && !user">
+      <span class="material-symbols-outlined spin">refresh</span>
+      <p>Chargement du profil...</p>
+    </div>
+
+    <ng-container *ngIf="user">
+      <!-- Header dégradé -->
+      <div class="profile-header">
+        <div class="avatar-container">
+          <img *ngIf="user.profilePictureUrl" [src]="user.profilePictureUrl" alt="Photo de profil" class="avatar-image">
+          <div *ngIf="!user.profilePictureUrl" class="avatar-placeholder">
+            <span class="material-symbols-outlined">person</span>
+          </div>
+        </div>
+        <h2 class="user-name">{{ user.fullName }}</h2>
+        <span class="user-role badge-gold">{{ formatRole(user.role) }}</span>
+        <p class="user-department" *ngIf="user.departmentName">
+          <span class="material-symbols-outlined" style="font-size:15px; vertical-align: middle;">business</span>
+          {{ user.departmentName }}
+        </p>
+        <p class="user-job" *ngIf="user.jobPositionName">
+          <span class="material-symbols-outlined" style="font-size:14px; vertical-align: middle;">work</span>
+          {{ user.jobPositionName }}
+        </p>
+      </div>
+
+      <!-- Bouton upload photo explicite -->
+      <div class="photo-upload-section">
+        <label for="profile-photo-input" class="photo-upload-btn">
+          <span class="material-symbols-outlined">photo_camera</span>
+          <span>{{ user.profilePictureUrl ? 'Changer la photo' : 'Ajouter une photo de profil' }}</span>
+        </label>
+        <input
+          id="profile-photo-input"
+          type="file"
+          (change)="onFileSelected($event)"
+          accept="image/*"
+          style="display: none;"
+        >
+        <p class="photo-hint">JPG, PNG · Max 2 Mo</p>
+      </div>
+
+      <!-- Champs info -->
+      <div class="profile-body">
+        <div class="info-group">
+          <span class="material-symbols-outlined info-icon">mail</span>
+          <div class="info-content">
+            <label>Adresse email</label>
+            <p>{{ user.email }}</p>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Numéro de téléphone</label>
+          <div class="input-wrapper">
+            <span class="material-symbols-outlined">phone</span>
+            <input type="tel" [(ngModel)]="editData.phoneNumber" placeholder="Ex: +216 XX XXX XXX">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Adresse postale</label>
+          <div class="input-wrapper">
+            <span class="material-symbols-outlined">location_on</span>
+            <input type="text" [(ngModel)]="editData.address" placeholder="Ex: Tunis, Tunisie">
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="profile-footer">
+        <button class="btn btn-secondary" (click)="close()">Annuler</button>
+        <button class="btn btn-primary" (click)="saveProfile()" [disabled]="isLoading">
+          <span *ngIf="isLoading" class="material-symbols-outlined spin">refresh</span>
+          <span *ngIf="!isLoading">
+            <span class="material-symbols-outlined" style="font-size:18px; vertical-align:middle;">save</span>
+            Enregistrer
+          </span>
+        </button>
+      </div>
+    </ng-container>
+  </div>
+</div>

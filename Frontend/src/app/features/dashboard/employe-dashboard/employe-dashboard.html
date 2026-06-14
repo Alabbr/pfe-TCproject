@@ -1,0 +1,65 @@
+<div class="employe-dashboard">
+  <!-- Banner -->
+  <div class="welcome-banner">
+    <div class="banner-content">
+      <p class="welcome-label">Bienvenue sur votre espace</p>
+      <h1>{{ currentUser?.fullName || 'Mon Espace' }}</h1>
+      <p class="welcome-date">{{ currentDate | date:'EEEE d MMMM yyyy' : '' : 'fr' }}</p>
+    </div>
+    <div class="banner-decoration">
+      <span class="material-symbols-outlined icon-large">workspace_premium</span>
+    </div>
+  </div>
+
+  <div class="dashboard-grid">
+    <!-- Info Card -->
+    <div class="card info-card">
+      <div class="card-header border-gold">
+        <div class="card-title">
+          <span class="material-symbols-outlined text-gold">badge</span>
+          <h2>Mes Informations</h2>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="info-row">
+          <span class="label">Département</span>
+          <span class="value">{{ currentUser?.departmentName || 'Non affecté' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Rôle Système</span>
+          <span class="value">{{ currentUser?.role?.replace('_', ' ') }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Statut</span>
+          <span class="status-badge"><span class="material-symbols-outlined">check_circle</span> Actif</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions / Shortcuts -->
+    <div class="card shortcuts-card">
+      <div class="card-header border-blue">
+        <div class="card-title">
+          <span class="material-symbols-outlined text-blue">bolt</span>
+          <h2>Accès Rapides</h2>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="shortcuts-grid">
+          <button class="shortcut-btn">
+            <span class="material-symbols-outlined">folder_shared</span>
+            Documents
+          </button>
+          <button class="shortcut-btn">
+            <span class="material-symbols-outlined">event_note</span>
+            Congés
+          </button>
+          <button class="shortcut-btn">
+            <span class="material-symbols-outlined">support_agent</span>
+            Support IT
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

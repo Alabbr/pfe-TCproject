@@ -1,0 +1,117 @@
+<div class="chef-dashboard">
+  <!-- Header Section -->
+  <div class="welcome-banner">
+    <div class="banner-content">
+      <p class="welcome-label">Espace Chef de Département</p>
+      <h1>{{ currentUser?.fullName || 'Mon Espace' }}</h1>
+      <p class="welcome-dept">{{ currentUser?.departmentName }}</p>
+    </div>
+    <div class="banner-decoration">
+      <span class="material-symbols-outlined icon-large">corporate_fare</span>
+    </div>
+  </div>
+
+  <!-- Main Content Grid -->
+  <div class="dashboard-grid">
+    
+    <!-- Pending Employees Alert Card -->
+    <div class="card pending-card" *ngIf="pendingUsers.length > 0">
+      <div class="card-header border-danger">
+        <div class="card-title">
+          <span class="material-symbols-outlined text-danger">warning</span>
+          <h2 class="text-danger">Action Requise</h2>
+        </div>
+        <span class="badge badge-danger">{{ pendingUsers.length }} en attente</span>
+      </div>
+      <div class="card-body">
+        <p class="pending-desc">Vous avez des employés qui n'ont pas encore de poste de travail attribué (Gestion).</p>
+        <div class="pending-list">
+          <div class="pending-item" *ngFor="let user of pendingUsers">
+            <div class="user-info">
+              <div class="avatar">{{ user.firstName.charAt(0) }}{{ user.lastName.charAt(0) }}</div>
+              <div>
+                <h4>{{ user.fullName }}</h4>
+                <p>{{ user.email }}</p>
+              </div>
+            </div>
+            <button class="btn btn-primary" (click)="openAssignModal(user)">
+              <span class="material-symbols-outlined">assignment_ind</span>
+              Affecter
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Success State if no pending -->
+    <div class="card success-card" *ngIf="pendingUsers.length === 0">
+      <div class="success-content">
+        <span class="material-symbols-outlined success-icon">check_circle</span>
+        <h2>Tout est en ordre</h2>
+        <p>Tous vos collaborateurs ont été affectés à un poste de travail.</p>
+      </div>
+    </div>
+
+    <!-- My Department Team -->
+    <div class="card team-card">
+      <div class="card-header border-gold">
+        <div class="card-title">
+          <span class="material-symbols-outlined text-gold">groups</span>
+          <h2>Mon Équipe ({{ departmentUsers.length }})</h2>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="team-grid">
+          <div class="team-member" *ngFor="let user of departmentUsers">
+            <div class="member-avatar">
+               <img *ngIf="user.profilePictureUrl" [src]="user.profilePictureUrl" alt="avatar">
+               <span *ngIf="!user.profilePictureUrl">{{ user.firstName.charAt(0) }}{{ user.lastName.charAt(0) }}</span>
+            </div>
+            <div class="member-details">
+              <h4>{{ user.fullName }}</h4>
+              <span class="member-role" [class.role-chef]="user.role === 'DIRECTEUR'">{{ user.role.replace('_', ' ') }}</span>
+              <p class="member-job" *ngIf="user.jobPositionName"><span class="material-symbols-outlined">work</span> {{ user.jobPositionName }}</p>
+              <p class="member-job missing" *ngIf="!user.jobPositionName"><span class="material-symbols-outlined">warning</span> En attente</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Assign Job Modal -->
+<div class="modal-backdrop" *ngIf="isAssignModalOpen" (click)="closeAssignModal()">
+  <div class="modal-content glass-effect" (click)="$event.stopPropagation()">
+    <button class="close-btn" (click)="closeAssignModal()">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+    
+    <div class="modal-header">
+      <h2>Affectation de Poste</h2>
+      <p>Choisissez une Gestion pour <strong>{{ selectedUserForAssign?.fullName }}</strong></p>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Poste de travail (Gestion)</label>
+        <div class="input-wrapper">
+          <span class="material-symbols-outlined">work_outline</span>
+          <select [(ngModel)]="selectedJobPositionId">
+            <option value="">— Sélectionner une gestion —</option>
+            <option *ngFor="let pos of jobPositions" [value]="pos.id">{{ pos.name }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeAssignModal()">Annuler</button>
+      <button class="btn btn-primary" (click)="assignJobPosition()" [disabled]="!selectedJobPositionId || isAssigning">
+        <span *ngIf="!isAssigning">Confirmer l'affectation</span>
+        <span *ngIf="isAssigning" class="material-symbols-outlined spin">refresh</span>
+      </button>
+    </div>
+  </div>
+</div>

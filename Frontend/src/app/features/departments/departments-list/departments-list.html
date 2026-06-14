@@ -1,0 +1,328 @@
+<!-- ============================================================ -->
+<!-- PAGE HEADER                                                  -->
+<!-- ============================================================ -->
+<div class="dept-page-header">
+  <div class="dept-header-left">
+    <div class="dept-header-icon">
+      <span class="material-symbols-outlined">account_tree</span>
+    </div>
+    <div>
+      <h1 class="dept-page-title">Structure & Départements</h1>
+      <p class="dept-page-subtitle">Organigramme institutionnel · Tunisie Clearing</p>
+    </div>
+  </div>
+  <div class="dept-header-right">
+    <div class="dept-view-toggle">
+      <button [class.active]="viewMode === 'grid'" (click)="viewMode = 'grid'" title="Vue Grille" class="dept-toggle-btn">
+        <span class="material-symbols-outlined">grid_view</span>
+      </button>
+      <button [class.active]="viewMode === 'list'" (click)="viewMode = 'list'" title="Vue Liste" class="dept-toggle-btn">
+        <span class="material-symbols-outlined">view_list</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- TABS + ADD BUTTON (SAME ROW)                                  -->
+<!-- ============================================================ -->
+<div class="dept-tabs-row">
+  <div class="dept-tabs">
+    <button class="dept-tab-btn" [class.active]="activeTab === 'active'" (click)="setTab('active')">
+      <span class="material-symbols-outlined">domain</span>
+      <span>Actifs</span>
+      <span class="dept-tab-badge" *ngIf="departments.length > 0">{{ departments.length }}</span>
+    </button>
+    <button class="dept-tab-btn" [class.active]="activeTab === 'archived'" (click)="setTab('archived')">
+      <span class="material-symbols-outlined">inventory_2</span>
+      <span>Archives</span>
+      <span class="dept-tab-badge archived" *ngIf="archivedDepartments.length > 0">{{ archivedDepartments.length }}</span>
+    </button>
+  </div>
+  <button type="button" class="dept-add-btn" (click)="openDrawer()" *ngIf="activeTab === 'active' && currentUser?.role === 'SUPER_ADMIN'">
+    <span class="material-symbols-outlined">add</span>
+    <span>Nouveau département</span>
+  </button>
+</div>
+
+<!-- ============================================================ -->
+<!-- EMPTY STATE                                                   -->
+<!-- ============================================================ -->
+<div class="dept-empty-state" *ngIf="(activeTab === 'active' && departments.length === 0) || (activeTab === 'archived' && archivedDepartments.length === 0)">
+  <div class="dept-empty-icon">
+    <span class="material-symbols-outlined" *ngIf="activeTab === 'active'">corporate_fare</span>
+    <span class="material-symbols-outlined" *ngIf="activeTab === 'archived'">inventory_2</span>
+  </div>
+  <h3>{{ activeTab === 'active' ? 'Aucun département configuré' : 'Aucun département archivé' }}</h3>
+  <p>{{ activeTab === 'active' ? 'Commencez par créer le premier département de votre organisation.' : 'Les départements désactivés apparaîtront ici.' }}</p>
+  <button type="button" class="dept-add-btn" (click)="openDrawer()" *ngIf="activeTab === 'active' && currentUser?.role === 'SUPER_ADMIN'">
+    <span class="material-symbols-outlined">add</span>
+    <span>Créer le premier département</span>
+  </button>
+</div>
+
+<!-- ============================================================ -->
+<!-- GRID VIEW                                                     -->
+<!-- ============================================================ -->
+<div class="dept-grid" *ngIf="(activeTab === 'active' ? departments.length : archivedDepartments.length) > 0 && viewMode === 'grid'">
+  <div class="dept-card" [class.dept-card--archived]="activeTab === 'archived'"
+       *ngFor="let dep of (activeTab === 'active' ? departments : archivedDepartments); let i = index"
+       [style.animation-delay]="(i * 0.05) + 's'"
+       (click)="openDetailsModal(dep)" style="cursor: pointer;">
+
+    <!-- Gold top line -->
+    <div class="dept-card-stripe"></div>
+
+    <!-- Card header -->
+    <div class="dept-card-top">
+      <div class="dept-card-icon">
+        <span class="material-symbols-outlined">{{ getDepartmentIcon(dep.name) }}</span>
+      </div>
+      <div class="dept-card-actions" *ngIf="activeTab === 'active' && currentUser?.role === 'SUPER_ADMIN'">
+        <button class="dept-action-btn dept-action-edit" (click)="openDrawer(dep); $event.stopPropagation()" title="Modifier">
+          <span class="material-symbols-outlined">edit</span>
+        </button>
+        <button class="dept-action-btn dept-action-archive" (click)="deleteDep(dep.id); $event.stopPropagation()" title="Archiver">
+          <span class="material-symbols-outlined">archive</span>
+        </button>
+      </div>
+      <div class="dept-card-actions" *ngIf="activeTab === 'archived' && currentUser?.role === 'SUPER_ADMIN'">
+        <button class="dept-restore-btn" (click)="restoreDep(dep.id); $event.stopPropagation()">
+          <span class="material-symbols-outlined">settings_backup_restore</span>
+          <span>Restaurer</span>
+        </button>
+        <button class="dept-action-btn dept-action-delete" (click)="permanentDeleteDep(dep.id); $event.stopPropagation()" title="Supprimer définitivement">
+          <span class="material-symbols-outlined">delete_forever</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Card content -->
+    <div class="dept-card-content">
+      <h3 class="dept-card-title">{{ dep.name }}</h3>
+      <p class="dept-card-desc">{{ dep.description || 'Aucune description disponible pour ce département.' }}</p>
+    </div>
+
+    <!-- Card footer -->
+    <div class="dept-card-footer">
+      <div class="dept-card-tag">
+        <span class="material-symbols-outlined">location_city</span>
+        <span>Département</span>
+      </div>
+      <span class="dept-active-dot" *ngIf="activeTab === 'active'"></span>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- LIST VIEW                                                     -->
+<!-- ============================================================ -->
+<div class="dept-list-card" *ngIf="(activeTab === 'active' ? departments.length : archivedDepartments.length) > 0 && viewMode === 'list'">
+  <div class="dept-list-header">
+    <span>Département</span>
+    <span>Description</span>
+    <span class="dept-list-actions-header">Actions</span>
+  </div>
+  <div class="dept-list-row" [class.dept-list-row--archived]="activeTab === 'archived'"
+       *ngFor="let dep of (activeTab === 'active' ? departments : archivedDepartments)"
+       (click)="openDetailsModal(dep)" style="cursor: pointer;">
+    <div class="dept-list-name">
+      <div class="dept-list-icon" [class.dept-list-icon--archived]="activeTab === 'archived'">
+        <span class="material-symbols-outlined">{{ getDepartmentIcon(dep.name) }}</span>
+      </div>
+      <div>
+        <span class="dept-list-name-text">{{ dep.name }}</span>
+        <span class="dept-list-type">Département</span>
+      </div>
+    </div>
+    <div class="dept-list-desc">{{ dep.description || '—' }}</div>
+    <div class="dept-list-actions">
+      <ng-container *ngIf="activeTab === 'active' && currentUser?.role === 'SUPER_ADMIN'">
+        <button class="dept-action-btn dept-action-edit" (click)="openDrawer(dep); $event.stopPropagation()" title="Modifier">
+          <span class="material-symbols-outlined">edit</span>
+        </button>
+        <button class="dept-action-btn dept-action-archive" (click)="deleteDep(dep.id); $event.stopPropagation()" title="Archiver">
+          <span class="material-symbols-outlined">archive</span>
+        </button>
+      </ng-container>
+      <ng-container *ngIf="activeTab === 'archived' && currentUser?.role === 'SUPER_ADMIN'">
+        <button class="dept-restore-btn" (click)="restoreDep(dep.id); $event.stopPropagation()">
+          <span class="material-symbols-outlined">settings_backup_restore</span>
+          <span>Restaurer</span>
+        </button>
+        <button class="dept-action-btn dept-action-delete" (click)="permanentDeleteDep(dep.id); $event.stopPropagation()" title="Supprimer définitivement">
+          <span class="material-symbols-outlined">delete_forever</span>
+        </button>
+      </ng-container>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- DRAWER (Add/Edit)                                             -->
+<!-- ============================================================ -->
+<div class="dept-drawer-overlay" [class.show]="isDrawerOpen" (click)="closeDrawer()"></div>
+<div class="dept-drawer" [class.open]="isDrawerOpen">
+  <div class="dept-drawer-header">
+    <div class="dept-drawer-title">
+      <div class="dept-drawer-icon">
+        <span class="material-symbols-outlined">{{ selectedDep ? 'edit_square' : 'domain_add' }}</span>
+      </div>
+      <div>
+        <h2>{{ selectedDep ? 'Modifier le département' : 'Nouveau département' }}</h2>
+        <p>{{ selectedDep ? 'Mettez à jour les informations' : 'Ajoutez un nouveau département à votre structure' }}</p>
+      </div>
+    </div>
+    <button class="dept-drawer-close" (click)="closeDrawer()">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+  </div>
+
+  <div class="dept-drawer-body">
+    <form [formGroup]="depForm">
+      <div class="dept-form-group">
+        <label class="dept-form-label">Nom du département <span class="dept-required">*</span></label>
+        <div class="dept-input-wrapper">
+          <span class="material-symbols-outlined dept-input-icon">badge</span>
+          <input type="text" formControlName="name" placeholder="Ex: Ressources Humaines" class="dept-input">
+        </div>
+        <div class="dept-field-error" *ngIf="depForm.get('name')?.invalid && depForm.get('name')?.touched">
+          <span class="material-symbols-outlined">error</span> Le nom est obligatoire
+        </div>
+      </div>
+
+      <div class="dept-form-group">
+        <label class="dept-form-label">Description</label>
+        <div class="dept-input-wrapper dept-textarea-wrapper">
+          <span class="material-symbols-outlined dept-input-icon">description</span>
+          <textarea formControlName="description" rows="5" placeholder="Décrivez les missions et responsabilités de ce département..." class="dept-input"></textarea>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="dept-drawer-footer">
+    <button type="button" class="dept-btn-cancel" (click)="closeDrawer()">Annuler</button>
+    <button type="button" class="dept-btn-save" (click)="saveDep()" [disabled]="isLoading">
+      <span class="material-symbols-outlined dept-spin" *ngIf="isLoading">sync</span>
+      <span class="material-symbols-outlined" *ngIf="!isLoading">{{ selectedDep ? 'save' : 'add_circle' }}</span>
+      <span>{{ isLoading ? 'En cours...' : (selectedDep ? 'Enregistrer' : 'Créer') }}</span>
+    </button>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- DETAILS MODAL — Modern Centered Overlay                       -->
+<!-- ============================================================ -->
+<div class="details-overlay" [class.show]="isDetailsModalOpen" (click)="closeDetailsModal()"></div>
+<div class="details-modal" [class.open]="isDetailsModalOpen" (click)="$event.stopPropagation()">
+
+  <!-- Hero Header -->
+  <div class="details-hero">
+    <div class="details-hero-pattern"></div>
+    <button class="details-close" (click)="closeDetailsModal()">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+    <div class="details-hero-content">
+      <div class="details-hero-icon">
+        <span class="material-symbols-outlined">{{ getDepartmentIcon(selectedDepDetails?.name || '') }}</span>
+      </div>
+      <h2 class="details-hero-title">{{ selectedDepDetails?.name }}</h2>
+      <div class="details-hero-badge">
+        <span class="material-symbols-outlined" style="font-size: 14px;">verified</span>
+        Département Actif
+      </div>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="details-body" *ngIf="selectedDepDetails">
+
+    <!-- Loading -->
+    <div class="details-loading" *ngIf="isLoadingDetails">
+      <span class="material-symbols-outlined dept-spin">refresh</span>
+      <p>Chargement des informations...</p>
+    </div>
+
+    <div *ngIf="!isLoadingDetails">
+      <!-- Stats Row -->
+      <div class="details-stats">
+        <div class="details-stat-card">
+          <span class="material-symbols-outlined">work</span>
+          <div class="details-stat-value">{{ departmentJobPositions.length }}</div>
+          <div class="details-stat-label">Postes de travail</div>
+        </div>
+        <div class="details-stat-card">
+          <span class="material-symbols-outlined">groups</span>
+          <div class="details-stat-value">{{ departmentMembers.length }}</div>
+          <div class="details-stat-label">Membres</div>
+        </div>
+        <div class="details-stat-card">
+          <span class="material-symbols-outlined">trending_up</span>
+          <div class="details-stat-value active">Actif</div>
+          <div class="details-stat-label">Statut</div>
+        </div>
+      </div>
+
+      <!-- Description Section -->
+      <div class="details-section">
+        <div class="details-section-header">
+          <span class="material-symbols-outlined">description</span>
+          <h3>Description</h3>
+        </div>
+        <p class="details-desc-text">{{ selectedDepDetails.description || 'Aucune description fournie pour ce département.' }}</p>
+      </div>
+
+      <!-- Job Positions Section -->
+      <div class="details-section">
+        <div class="details-section-header">
+          <span class="material-symbols-outlined">badge</span>
+          <h3>Postes de Travail (Gestions)</h3>
+        </div>
+
+        <div class="details-empty" *ngIf="departmentJobPositions.length === 0">
+          <span class="material-symbols-outlined">info</span>
+          <p>Aucun poste configuré pour ce département.</p>
+        </div>
+
+        <div class="details-chips" *ngIf="departmentJobPositions.length > 0">
+          <div class="details-chip" *ngFor="let job of departmentJobPositions">
+            <span class="material-symbols-outlined">work_outline</span>
+            {{ job.name }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Team Members Section -->
+      <div class="details-section">
+        <div class="details-section-header">
+          <span class="material-symbols-outlined">groups</span>
+          <h3>Équipe du Département</h3>
+        </div>
+
+        <div class="details-empty" *ngIf="departmentMembers.length === 0">
+          <span class="material-symbols-outlined">info</span>
+          <p>Aucun membre dans ce département.</p>
+        </div>
+
+        <div class="details-members" *ngIf="departmentMembers.length > 0">
+          <div class="details-member" *ngFor="let member of departmentMembers" [class.chef-member]="member.role === 'DIRECTEUR'">
+            <div class="member-avatar">
+              <img *ngIf="member.profilePictureUrl" [src]="member.profilePictureUrl" alt="Avatar">
+              <span *ngIf="!member.profilePictureUrl">{{ member.firstName.charAt(0) }}{{ member.lastName.charAt(0) }}</span>
+            </div>
+            <div class="member-info">
+              <span class="member-name">
+                {{ member.firstName }} {{ member.lastName }}
+                <span class="material-symbols-outlined chef-badge" *ngIf="member.role === 'DIRECTEUR'" title="Chef de Département">star</span>
+              </span>
+              <span class="member-role">{{ member.jobPositionName || (member.role === 'DIRECTEUR' ? 'Chef de Département' : 'Employé') }}</span>
+            </div>
+            <span class="member-status"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

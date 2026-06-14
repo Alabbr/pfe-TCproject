@@ -1,0 +1,94 @@
+.kpi-card {
+  background-color: var(--color-bg-white);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-5);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  border-left: 4px solid transparent;
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-modal);
+  }
+
+  &.status-primary { border-left-color: var(--color-primary-light); }
+  &.status-success { border-left-color: var(--color-success); }
+  &.status-warning { border-left-color: var(--color-warning); }
+  &.status-danger { border-left-color: var(--color-danger); }
+}
+
+.kpi-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.kpi-title {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.kpi-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  span {
+    font-size: 20px;
+  }
+
+  &.icon-primary { 
+    background-color: rgba(26, 74, 138, 0.1);
+    color: var(--color-primary-light);
+  }
+  &.icon-success {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: var(--color-success);
+  }
+  &.icon-warning {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: var(--color-warning);
+  }
+  &.icon-danger {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--color-danger);
+  }
+}
+
+.kpi-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.kpi-value {
+  font-family: var(--font-family-mono);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text-main);
+}
+
+.kpi-trend {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  font-size: 12px;
+  font-weight: 500;
+
+  .trend-icon {
+    font-size: 16px;
+  }
+
+  &.trend-up { color: var(--color-success); }
+  &.trend-down { color: var(--color-danger); }
+  &.trend-neutral { color: var(--color-text-muted); }
+}

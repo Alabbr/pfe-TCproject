@@ -1,0 +1,330 @@
+@use 'styles/variables';
+
+/* ==========================================================================
+   Global Resets & Base Styles
+   ========================================================================== */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  font-family: var(--font-family-main);
+  background-color: var(--color-bg-surface);
+  color: var(--color-text-main);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Typography Utilities */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+a {
+  text-decoration: none;
+  color: var(--color-primary-light);
+  transition: color var(--transition-base);
+}
+
+a:hover {
+  color: var(--color-accent);
+}
+
+ul, ol {
+  list-style: none;
+}
+
+button {
+  font-family: inherit;
+  border: none;
+  background: none;
+  cursor: pointer;
+  outline: none;
+}
+
+/* Material Symbols Adjustments */
+.material-symbols-outlined {
+  font-variation-settings:
+  'FILL' 0,
+  'wght' 300, /* Thinner, closer to 1.5px outline */
+  'GRAD' 0,
+  'opsz' 24;
+  vertical-align: middle;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: var(--radius-pill);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* ==========================================================================
+   Global Dark Mode Overrides
+   Catches hardcoded colors in all component SCSS files
+   ========================================================================== */
+body.dark-mode {
+  background-color: var(--color-bg-surface);
+  color: var(--color-text-main);
+
+  /* ---- Headings ---- */
+  h1, h2, h3, h4, h5, h6,
+  .usr-page-title,
+  .dept-page-title,
+  .usr-stat-value,
+  .dept-stat-value {
+    color: var(--color-text-heading) !important;
+  }
+
+  /* ---- Cards & white backgrounds ---- */
+  .card,
+  .login-box,
+  .forward-modal,
+  .modal-content,
+  .glass-effect,
+  .pending-item,
+  .team-member,
+  .kpi-card,
+  .stat-card,
+  .table-container,
+  .table-card,
+  .filter-bar,
+  .content-header,
+  .filter-section,
+  .user-form-card,
+  .dept-details-card,
+  .usr-view-toggle,
+  .usr-toolbar,
+  .usr-card,
+  .usr-stats-card,
+  .usr-table-container,
+  .dept-toolbar,
+  .dept-card,
+  .dept-stat-card,
+  .dept-table-container,
+  .dept-view-toggle {
+    background-color: var(--color-bg-white) !important;
+    color: var(--color-text-main) !important;
+  }
+
+  /* ---- Borders ---- */
+  .card-header,
+  .modal-header,
+  .modal-footer,
+  .dropdown-divider,
+  th,
+  td {
+    border-color: var(--color-border) !important;
+  }
+
+  /* ---- Tables ---- */
+  table {
+    background-color: var(--color-bg-white) !important;
+    color: var(--color-text-main) !important;
+  }
+  thead,
+  th {
+    background-color: var(--color-bg-surface) !important;
+    color: var(--color-text-main) !important;
+  }
+  tr:hover td {
+    background-color: var(--color-bg-secondary) !important;
+  }
+
+  /* ---- Inputs, Selects, Textareas ---- */
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    background-color: var(--color-bg-input) !important;
+    color: var(--color-text-main) !important;
+    border-color: var(--color-border) !important;
+
+    &::placeholder {
+      color: var(--color-text-muted) !important;
+    }
+    &:focus {
+      background-color: var(--color-bg-white) !important;
+      border-color: var(--color-primary-light) !important;
+    }
+  }
+
+  /* ---- Muted text overrides (catches #666, #777, #555, etc.) ---- */
+  .pending-desc,
+  .member-job,
+  .member-role,
+  .close-btn,
+  .modal-body p,
+  .modal-header p,
+  .success-card p,
+  .usr-page-subtitle,
+  .dept-page-subtitle,
+  .usr-stat-label,
+  .dept-stat-label,
+  .usr-tab-btn,
+  .dept-tab-btn,
+  .btn.btn-secondary {
+    color: var(--color-text-muted) !important;
+  }
+
+  /* ---- Grid gap fill (team-grid background: #eee) ---- */
+  .team-grid {
+    background: var(--color-border) !important;
+  }
+
+  /* ---- Sidebar - keep its own dark scheme, just polish ---- */
+  .sidebar {
+    background-color: #0B1929 !important;
+  }
+
+  /* ---- Dropdowns, menus ---- */
+  .dropdown-menu {
+    background-color: var(--color-bg-white) !important;
+    border-color: var(--color-border) !important;
+  }
+  .dropdown-item {
+    color: var(--color-text-main) !important;
+    &:hover {
+      background-color: var(--color-bg-secondary) !important;
+    }
+  }
+
+  /* ---- Badges & tags ---- */
+  .role-tag,
+  .status-badge {
+    background-color: var(--color-bg-secondary) !important;
+    color: var(--color-text-main) !important;
+  }
+
+  /* ---- Modal glass effect ---- */
+  .glass-effect {
+    background: rgba(30, 41, 59, 0.95) !important;
+    border: 1px solid var(--color-border) !important;
+  }
+
+  /* ---- Buttons ---- */
+  .btn.btn-secondary {
+    background-color: var(--color-bg-surface) !important;
+    border-color: var(--color-border) !important;
+    color: var(--color-text-main) !important;
+    &:hover {
+      background-color: var(--color-bg-secondary) !important;
+    }
+  }
+
+  /* ---- Hover backgrounds ---- */
+  .pending-item:hover,
+  .team-member:hover,
+  .nav-item:hover,
+  .forward-item:hover {
+    background-color: var(--color-bg-secondary) !important;
+  }
+
+  /* ---- Chat specifics ---- */
+  .chat-nav {
+    background-color: var(--color-bg-white) !important;
+  }
+  .chat-details {
+    background-color: var(--color-bg-white) !important;
+  }
+  .msg-bubble {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+  }
+
+  /* ---- Profile modal ---- */
+  .profile-modal-content {
+    background-color: var(--color-bg-white) !important;
+  }
+
+  /* ---- KPI / Stat cards ---- */
+  .stat-icon-container,
+  .kpi-icon {
+    background-color: var(--color-bg-surface) !important;
+  }
+
+  /* ---- Alert danger ---- */
+  .alert-danger {
+    background-color: rgba(239, 68, 68, 0.15) !important;
+    color: #FCA5A5 !important;
+  }
+
+  /* ---- Settings modal ---- */
+  .settings-content {
+    background-color: var(--color-bg-white) !important;
+  }
+
+  /* ---- Dashboard hardcoded ---- */
+  .success-card {
+    background: rgba(16, 185, 129, 0.1) !important;
+    border-color: rgba(16, 185, 129, 0.3) !important;
+  }
+  .pending-item {
+    background: var(--color-bg-surface) !important;
+    border-color: var(--color-border) !important;
+  }
+  .user-info h4,
+  .card-title h2 {
+    color: var(--color-text-heading) !important;
+  }
+  .user-info p {
+    color: var(--color-text-muted) !important;
+  }
+
+  /* ---- Catch-all for hardcoded borders ---- */
+  [style*="border"] {
+    border-color: var(--color-border) !important;
+  }
+
+  /* ---- Profile modal fix ---- */
+  .profile-section,
+  .profile-card,
+  .profile-info-card {
+    background-color: var(--color-bg-white) !important;
+    color: var(--color-text-main) !important;
+  }
+  .profile-label,
+  .info-label {
+    color: var(--color-text-muted) !important;
+  }
+  .profile-value,
+  .info-value {
+    color: var(--color-text-main) !important;
+  }
+
+  /* ---- Employe dashboard specific ---- */
+  .leave-balance-card,
+  .leave-card,
+  .request-card,
+  .doc-card,
+  .info-card,
+  .stat-card,
+  .dashboard-card {
+    background: var(--color-bg-white) !important;
+    color: var(--color-text-main) !important;
+  }
+
+  /* ---- Scrollbar for dark ---- */
+  ::-webkit-scrollbar-track {
+    background: var(--color-bg-surface);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+  }
+}
+
+

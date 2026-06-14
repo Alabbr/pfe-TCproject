@@ -1,0 +1,119 @@
+.toast-container {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.toast-item {
+  width: 380px;
+  max-width: calc(100vw - 48px);
+  background: var(--color-bg-white);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px;
+  pointer-events: auto;
+  animation: slideIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  position: relative;
+  overflow: hidden;
+  border-left: 4px solid transparent;
+
+  &::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: currentColor;
+    width: 100%;
+    animation: shrink 4s linear forwards;
+    opacity: 0.15;
+  }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(120%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes shrink {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+.toast-success {
+  border-left-color: var(--color-success);
+  .toast-icon { color: var(--color-success); }
+  &::before { color: var(--color-success); }
+}
+
+.toast-error {
+  border-left-color: var(--color-danger);
+  .toast-icon { color: var(--color-danger); }
+  &::before { color: var(--color-danger); }
+}
+
+.toast-warning {
+  border-left-color: var(--color-warning);
+  .toast-icon { color: var(--color-warning); }
+  &::before { color: var(--color-warning); }
+}
+
+.toast-info {
+  border-left-color: var(--color-primary);
+  .toast-icon { color: var(--color-primary); }
+  &::before { color: var(--color-primary); }
+}
+
+.toast-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+  span { font-size: 24px; }
+}
+
+.toast-content {
+  flex: 1;
+
+  h4 {
+    margin: 0 0 4px 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--color-text-main);
+  }
+
+  p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--color-text-muted);
+    line-height: 1.4;
+  }
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+
+  &:hover {
+    background: var(--color-bg-surface);
+    color: var(--color-text-main);
+  }
+
+  span { font-size: 18px; }
+}

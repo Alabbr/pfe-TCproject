@@ -1,0 +1,301 @@
+<!-- ============================================================ -->
+<!-- PAGE HEADER                                                  -->
+<!-- ============================================================ -->
+<div class="usr-page-header">
+  <div class="usr-header-left">
+    <div class="usr-header-icon">
+      <span class="material-symbols-outlined">group</span>
+    </div>
+    <div>
+      <h1 class="usr-page-title">Utilisateurs</h1>
+      <p class="usr-page-subtitle">Gestion des accès et des rôles · Tunisie Clearing</p>
+    </div>
+  </div>
+  <div class="usr-header-right">
+    <div class="usr-view-toggle">
+      <button [class.active]="viewMode === 'grid'" (click)="viewMode = 'grid'" title="Vue Grille" class="usr-toggle-btn">
+        <span class="material-symbols-outlined">grid_view</span>
+      </button>
+      <button [class.active]="viewMode === 'list'" (click)="viewMode = 'list'" title="Vue Liste" class="usr-toggle-btn">
+        <span class="material-symbols-outlined">view_list</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- TABS + SEARCH + ADD BUTTON                                    -->
+<!-- ============================================================ -->
+<div class="usr-toolbar">
+  <div class="usr-tabs">
+    <button class="usr-tab-btn" [class.active]="activeTab === 'active'" (click)="setTab('active')">
+      <span class="material-symbols-outlined">person</span>
+      <span>Actifs</span>
+      <span class="usr-tab-badge" *ngIf="users.length > 0">{{ users.length }}</span>
+    </button>
+    <button class="usr-tab-btn" [class.active]="activeTab === 'archived'" (click)="setTab('archived')">
+      <span class="material-symbols-outlined">inventory_2</span>
+      <span>Archives</span>
+      <span class="usr-tab-badge archived" *ngIf="archivedUsers.length > 0">{{ archivedUsers.length }}</span>
+    </button>
+  </div>
+
+  <div class="usr-toolbar-right">
+    <!-- Search -->
+    <div class="usr-search-box">
+      <span class="material-symbols-outlined">search</span>
+      <input type="text" [(ngModel)]="searchQuery" placeholder="Nom, email, rôle...">
+    </div>
+    <!-- Department filter -->
+    <div class="usr-filter-box">
+      <span class="material-symbols-outlined">corporate_fare</span>
+      <select [(ngModel)]="selectedDepartmentId">
+        <option value="">Tous les départements</option>
+        <option *ngFor="let dep of departments" [value]="dep.id">{{ dep.name }}</option>
+      </select>
+    </div>
+    <!-- Add button (only in active tab) -->
+    <button type="button" class="usr-add-btn" (click)="openDrawer()" *ngIf="activeTab === 'active' && currentUser?.role === 'SUPER_ADMIN'">
+      <span class="material-symbols-outlined">add</span>
+      <span>Nouvel utilisateur</span>
+    </button>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- EMPTY STATE                                                   -->
+<!-- ============================================================ -->
+<div class="usr-empty-state" *ngIf="filteredUsers.length === 0">
+  <div class="usr-empty-icon">
+    <span class="material-symbols-outlined">{{ activeTab === 'active' ? 'group_off' : 'inventory_2' }}</span>
+  </div>
+  <h3>{{ activeTab === 'active' ? 'Aucun utilisateur trouvé' : 'Aucun utilisateur archivé' }}</h3>
+  <p>{{ activeTab === 'active' ? 'Commencez par ajouter le premier collaborateur.' : 'Les utilisateurs désactivés apparaîtront ici.' }}</p>
+  <button type="button" class="usr-add-btn" (click)="openDrawer()" *ngIf="activeTab === 'active' && !searchQuery && !selectedDepartmentId && currentUser?.role === 'SUPER_ADMIN'">
+    <span class="material-symbols-outlined">add</span>
+    <span>Créer le premier utilisateur</span>
+  </button>
+</div>
+
+<!-- ============================================================ -->
+<!-- GRID VIEW                                                     -->
+<!-- ============================================================ -->
+<div class="usr-grid" *ngIf="(activeTab === 'active' ? users.length : archivedUsers.length) > 0 && viewMode === 'grid'">
+  <div class="usr-card" [class.usr-card--archived]="activeTab === 'archived'"
+       *ngFor="let user of filteredUsers; let i = index"
+       [style.animation-delay]="(i * 0.05) + 's'"
+       (click)="openProfileModal(user.id)" style="cursor: pointer;">
+
+    <div class="usr-card-stripe"></div>
+
+    <div class="usr-card-top">
+      <div class="usr-avatar">
+        <img *ngIf="user.profilePictureUrl" [src]="user.profilePictureUrl" alt="Avatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+        <span *ngIf="!user.profilePictureUrl">{{ user.firstName.charAt(0) }}{{ user.lastName.charAt(0) }}</span>
+      </div>
+      <!-- Active actions -->
+      <div class="usr-card-actions" *ngIf="activeTab === 'active' && currentUser?.role === 'SUPER_ADMIN'">
+        <button class="usr-action-btn usr-action-edit" (click)="openDrawer(user); $event.stopPropagation()" title="Modifier">
+          <span class="material-symbols-outlined">edit</span>
+        </button>
+        <button class="usr-action-btn usr-action-delete" (click)="deleteUser(user.id); $event.stopPropagation()" title="Désactiver">
+          <span class="material-symbols-outlined">archive</span>
+        </button>
+      </div>
+      <!-- Archived actions -->
+      <div class="usr-card-actions" *ngIf="activeTab === 'archived' && currentUser?.role === 'SUPER_ADMIN'">
+        <button class="usr-restore-btn" (click)="restoreUser(user.id); $event.stopPropagation()">
+          <span class="material-symbols-outlined">settings_backup_restore</span>
+          <span>Restaurer</span>
+        </button>
+        <button class="usr-action-btn usr-action-delete-forever" (click)="permanentDeleteUser(user.id); $event.stopPropagation()" title="Supprimer définitivement">
+          <span class="material-symbols-outlined">delete_forever</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="usr-card-content" [class.usr-card-content--archived]="activeTab === 'archived'">
+      <h3 class="usr-card-name">{{ user.firstName }} {{ user.lastName }}</h3>
+      <p class="usr-card-email">{{ user.email }}</p>
+      <div class="usr-card-tags">
+        <span class="usr-role-badge">{{ user.role.replace('_', ' ') }}</span>
+        <span class="usr-dept-badge">{{ user.departmentName || 'Sans département' }}</span>
+      </div>
+    </div>
+
+    <div class="usr-card-footer">
+      <div class="usr-card-tag">
+        <span class="material-symbols-outlined">badge</span>
+        <span>{{ user.role.includes('ADMIN') ? 'Administrateur' : 'Collaborateur' }}</span>
+      </div>
+      <span class="usr-active-dot" *ngIf="activeTab === 'active'"></span>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- LIST VIEW                                                     -->
+<!-- ============================================================ -->
+<div class="usr-list-card" *ngIf="filteredUsers.length > 0 && viewMode === 'list'">
+  <div class="usr-list-header">
+    <span>Utilisateur</span>
+    <span>Rôle & Département</span>
+    <span>Statut</span>
+    <span class="usr-list-actions-header">Actions</span>
+  </div>
+  <div class="usr-list-row" [class.usr-list-row--archived]="activeTab === 'archived'"
+       *ngFor="let user of filteredUsers"
+       (click)="openProfileModal(user.id)" style="cursor: pointer;">
+    <div class="usr-list-info">
+      <div class="usr-mini-avatar" [class.usr-mini-avatar--archived]="activeTab === 'archived'">
+        {{ user.firstName.charAt(0) }}{{ user.lastName.charAt(0) }}
+      </div>
+      <div>
+        <span class="usr-list-name">{{ user.firstName }} {{ user.lastName }}</span>
+        <span class="usr-list-email">{{ user.email }}</span>
+      </div>
+    </div>
+    <div class="usr-list-role">
+      <span class="usr-role-badge">{{ user.role.replace('_', ' ') }}</span>
+      <span class="usr-dept-text"><span class="material-symbols-outlined">business</span>{{ user.departmentName || '—' }}</span>
+    </div>
+    <div>
+      <span class="usr-status-badge" [class.usr-status-active]="user.isActive" [class.usr-status-archived]="!user.isActive">
+        {{ user.isActive ? 'Actif' : 'Archivé' }}
+      </span>
+    </div>
+    <div class="usr-list-actions">
+      <ng-container *ngIf="activeTab === 'active' && currentUser?.role === 'SUPER_ADMIN'">
+        <button class="usr-action-btn usr-action-edit" (click)="openDrawer(user); $event.stopPropagation()" title="Modifier">
+          <span class="material-symbols-outlined">edit</span>
+        </button>
+        <button class="usr-action-btn usr-action-delete" (click)="deleteUser(user.id); $event.stopPropagation()" title="Désactiver">
+          <span class="material-symbols-outlined">archive</span>
+        </button>
+      </ng-container>
+      <ng-container *ngIf="activeTab === 'archived' && currentUser?.role === 'SUPER_ADMIN'">
+        <button class="usr-restore-btn" (click)="restoreUser(user.id); $event.stopPropagation()">
+          <span class="material-symbols-outlined">settings_backup_restore</span>
+          <span>Restaurer</span>
+        </button>
+        <button class="usr-action-btn usr-action-delete-forever" (click)="permanentDeleteUser(user.id); $event.stopPropagation()" title="Supprimer définitivement">
+          <span class="material-symbols-outlined">delete_forever</span>
+        </button>
+      </ng-container>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- DRAWER (Add / Edit)                                           -->
+<!-- ============================================================ -->
+<div class="usr-drawer-overlay" [class.show]="isDrawerOpen" (click)="closeDrawer()"></div>
+<div class="usr-drawer" [class.open]="isDrawerOpen">
+  <div class="usr-drawer-header">
+    <div class="usr-drawer-title">
+      <div class="usr-drawer-icon">
+        <span class="material-symbols-outlined">{{ selectedUser ? 'manage_accounts' : 'person_add' }}</span>
+      </div>
+      <div>
+        <h2>{{ selectedUser ? 'Modifier l\'utilisateur' : 'Nouvel utilisateur' }}</h2>
+        <p>{{ selectedUser ? 'Mettez à jour les informations' : 'Ajoutez un nouveau collaborateur' }}</p>
+      </div>
+    </div>
+    <button class="usr-drawer-close" (click)="closeDrawer()">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+  </div>
+
+  <div class="usr-drawer-body">
+    <form [formGroup]="userForm">
+      <div class="usr-form-row">
+        <div class="usr-form-group">
+          <label class="usr-form-label">Prénom <span class="usr-required">*</span></label>
+          <div class="usr-input-wrapper">
+            <span class="material-symbols-outlined usr-input-icon">badge</span>
+            <input type="text" formControlName="firstName" placeholder="Prénom" class="usr-input">
+          </div>
+          <div class="usr-field-error" *ngIf="userForm.get('firstName')?.invalid && userForm.get('firstName')?.touched">
+            <span class="material-symbols-outlined">error</span> Obligatoire
+          </div>
+        </div>
+        <div class="usr-form-group">
+          <label class="usr-form-label">Nom <span class="usr-required">*</span></label>
+          <div class="usr-input-wrapper">
+            <span class="material-symbols-outlined usr-input-icon">badge</span>
+            <input type="text" formControlName="lastName" placeholder="Nom" class="usr-input">
+          </div>
+          <div class="usr-field-error" *ngIf="userForm.get('lastName')?.invalid && userForm.get('lastName')?.touched">
+            <span class="material-symbols-outlined">error</span> Obligatoire
+          </div>
+        </div>
+      </div>
+
+      <div class="usr-form-group">
+        <label class="usr-form-label">Email professionnel <span class="usr-required">*</span></label>
+        <div class="usr-input-wrapper">
+          <span class="material-symbols-outlined usr-input-icon">mail</span>
+          <input type="email" formControlName="email" placeholder="prenom.nom@tunisie-clearing.tn" class="usr-input">
+        </div>
+        <div class="usr-field-error" *ngIf="userForm.get('email')?.invalid && userForm.get('email')?.touched">
+          <span class="material-symbols-outlined">error</span> Email valide requis
+        </div>
+      </div>
+
+      <div class="usr-form-group">
+        <label class="usr-form-label">
+          Mot de passe <span class="usr-required" *ngIf="!selectedUser">*</span>
+        </label>
+        <div class="usr-input-wrapper">
+          <span class="material-symbols-outlined usr-input-icon">lock</span>
+          <input type="password" formControlName="password" placeholder="Minimum 6 caractères" class="usr-input">
+        </div>
+        <span class="usr-field-hint" *ngIf="selectedUser">Laissez vide pour ne pas modifier</span>
+      </div>
+
+      <div class="usr-form-group">
+        <label class="usr-form-label">Département <span class="usr-required">*</span></label>
+        <div class="usr-input-wrapper">
+          <span class="material-symbols-outlined usr-input-icon">domain</span>
+          <select formControlName="departmentId" class="usr-input">
+            <option value="">— Sélectionner un département —</option>
+            <option *ngFor="let dep of departments" [value]="dep.id">{{ dep.name }}</option>
+          </select>
+        </div>
+        <div class="usr-field-error" *ngIf="userForm.get('departmentId')?.invalid && userForm.get('departmentId')?.touched">
+          <span class="material-symbols-outlined">error</span> Obligatoire
+        </div>
+      </div>
+
+      <div class="usr-form-group">
+        <label class="usr-form-label">Type de compte <span class="usr-required">*</span></label>
+        <div class="usr-input-wrapper">
+          <span class="material-symbols-outlined usr-input-icon">admin_panel_settings</span>
+          <select formControlName="role" class="usr-input">
+            <option value="EMPLOYE">Employé (Assignation par le Chef)</option>
+            <option value="DIRECTEUR">Chef de Département</option>
+          </select>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="usr-drawer-footer">
+    <button type="button" class="usr-btn-cancel" (click)="closeDrawer()">Annuler</button>
+    <button type="button" class="usr-btn-save" (click)="saveUser()" [disabled]="isLoading">
+      <span class="material-symbols-outlined usr-spin" *ngIf="isLoading">sync</span>
+      <span class="material-symbols-outlined" *ngIf="!isLoading">{{ selectedUser ? 'save' : 'add_circle' }}</span>
+      <span>{{ isLoading ? 'En cours...' : (selectedUser ? 'Enregistrer' : 'Créer') }}</span>
+    </button>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PROFILE MODAL (View User Details)                             -->
+<!-- ============================================================ -->
+<app-profile-modal 
+  [isOpen]="isProfileModalOpen" 
+  [userId]="selectedUserIdToView"
+  (closeEvent)="closeProfileModal()"
+  (userUpdated)="onProfileUpdated($event)">
+</app-profile-modal>

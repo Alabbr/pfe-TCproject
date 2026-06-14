@@ -1,0 +1,41 @@
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo-container">
+      <div class="logo-hexagon">
+        <span class="logo-text">TC</span>
+      </div>
+      <div class="logo-title">
+        <span class="title-main">Tunisie Clearing</span>
+        <span class="title-sub">Portail Administratif</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar-content">
+    <div class="nav-group" *ngFor="let group of navGroups">
+      <div class="group-title">{{ group.name }}</div>
+      <nav class="nav-items">
+        <a *ngFor="let item of group.items" 
+           [routerLink]="item.route" 
+           routerLinkActive="active" 
+           class="nav-link">
+          <span class="material-symbols-outlined nav-icon">{{ item.icon }}</span>
+          <span class="nav-label">{{ item.label }}</span>
+        </a>
+      </nav>
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="user-info" *ngIf="currentUser" (click)="openProfile()" style="cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">
+      <div class="avatar">
+        <img *ngIf="currentUser.profilePictureUrl" [src]="currentUser.profilePictureUrl" alt="Avatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+        <span *ngIf="!currentUser.profilePictureUrl" class="material-symbols-outlined">person</span>
+      </div>
+      <div class="user-details">
+        <div class="user-name">{{ currentUser.fullName || 'Utilisateur' }}</div>
+        <div class="user-role">{{ currentUser.role === 'SUPER_ADMIN' ? 'Directeur Général' : (currentUser.role === 'DIRECTEUR' ? 'Chef de Département' : 'Employé') }}</div>
+      </div>
+    </div>
+  </div>
+</aside>

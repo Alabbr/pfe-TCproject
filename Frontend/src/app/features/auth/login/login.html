@@ -1,0 +1,85 @@
+<div class="login-container">
+  <!-- Left Panel - Branding & Visuals -->
+  <div class="login-left" 
+       [ngStyle]="{'background-image': backgroundUrl ? 'linear-gradient(rgba(9, 29, 66, 0.3), rgba(9, 29, 66, 0.5)), url(' + backgroundUrl + ')' : '', 'background-size': 'cover', 'background-position': 'center'}">
+    <div class="branding">
+      <div class="logo-hexagon">
+        <span class="logo-text">TC</span>
+      </div>
+      <h1>Tunisie Clearing</h1>
+      <p class="tagline">Portail Administratif Interne</p>
+    </div>
+    
+    <div class="illustration" *ngIf="!backgroundUrl">
+      <!-- Abstract visual representation using CSS shapes -->
+      <div class="shape shape-1"></div>
+      <div class="shape shape-2"></div>
+      <div class="shape shape-3"></div>
+    </div>
+    
+    <div class="footer-text">
+      &copy; 2026 Tunisie Clearing. Système sécurisé.
+    </div>
+  </div>
+  
+  <div class="login-right">
+    <div class="login-box">
+      <div class="login-header">
+        <h2>Bienvenue</h2>
+        <p>Connectez-vous pour accéder à votre espace de travail</p>
+      </div>
+      
+      <form class="login-form" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+        <div class="alert alert-danger" *ngIf="errorMessage">
+          <span class="material-symbols-outlined">error</span>
+          {{ errorMessage }}
+        </div>
+
+        <div class="form-group">
+          <label>Identifiant</label>
+          <div class="input-wrapper" [class.has-error]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
+            <span class="material-symbols-outlined input-icon">person</span>
+            <input type="email" formControlName="email" placeholder="Entrez votre email">
+          </div>
+          <div class="error-text" *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
+            Un email valide est requis.
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label>Mot de passe</label>
+          <div class="input-wrapper" [class.has-error]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
+            <span class="material-symbols-outlined input-icon">lock</span>
+            <input [type]="showPassword ? 'text' : 'password'" formControlName="password" placeholder="Entrez votre mot de passe">
+            <button type="button" class="visibility-btn" (click)="togglePasswordVisibility()">
+              <span class="material-symbols-outlined">{{ showPassword ? 'visibility_off' : 'visibility' }}</span>
+            </button>
+          </div>
+          <div class="error-text" *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
+            Le mot de passe est requis.
+          </div>
+        </div>
+        
+        <div class="form-options">
+          <label class="checkbox-container">
+            <input type="checkbox" formControlName="rememberMe">
+            <span class="checkmark"></span>
+            Se souvenir de moi
+          </label>
+          <a href="#" class="forgot-link">Mot de passe oublié ?</a>
+        </div>
+        
+        <button type="submit" class="btn-primary" [disabled]="isLoading">
+          <span *ngIf="!isLoading">Se connecter</span>
+          <span *ngIf="!isLoading" class="material-symbols-outlined">arrow_forward</span>
+          <span *ngIf="isLoading" class="spinner"></span>
+        </button>
+      </form>
+      
+      <div class="security-badge">
+        <span class="material-symbols-outlined">shield_locked</span>
+        Connexion chiffrée de bout en bout
+      </div>
+    </div>
+  </div>
+</div>

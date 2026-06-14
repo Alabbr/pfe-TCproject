@@ -1,0 +1,11 @@
+﻿# Angular
+Frontend/node_modules/
+Frontend/dist/
+Frontend/.angular/
+
+# Spring Boot
+Backend/target/
+
+# IDE
+**/.idea/
+**/.vscode/

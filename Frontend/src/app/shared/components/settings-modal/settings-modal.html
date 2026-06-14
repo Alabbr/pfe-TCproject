@@ -1,0 +1,50 @@
+<div class="settings-modal-overlay" *ngIf="isOpen" (click)="closeModal()">
+  <div class="settings-modal-content" (click)="$event.stopPropagation()">
+    <button class="settings-modal-close" (click)="closeModal()">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+    
+    <div class="settings-modal-header">
+      <div class="settings-modal-icon">
+        <span class="material-symbols-outlined">settings</span>
+      </div>
+      <h2>Paramètres Système</h2>
+      <p>Configurez les paramètres globaux de l'application.</p>
+    </div>
+
+    <div class="settings-modal-body">
+      <div class="settings-section">
+        <h3>Page de Connexion</h3>
+        <p class="settings-section-desc">Modifiez l'image d'arrière-plan affichée sur la page de connexion.</p>
+        
+        <div class="upload-container">
+          <label class="upload-area" [class.has-image]="imagePreview">
+            <input type="file" accept="image/*" (change)="onFileSelected($event)" [disabled]="isUploading">
+            
+            <div class="upload-placeholder" *ngIf="!imagePreview">
+              <span class="material-symbols-outlined">cloud_upload</span>
+              <p>Cliquez ou glissez une image ici</p>
+              <span class="upload-hint">Format recommandé: 1920x1080 (Max 5MB)</span>
+            </div>
+
+            <div class="upload-preview" *ngIf="imagePreview">
+              <img [src]="imagePreview" alt="Preview">
+              <div class="upload-preview-overlay">
+                <span class="material-symbols-outlined">edit</span>
+                <span>Changer l'image</span>
+              </div>
+            </div>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-modal-footer">
+      <button class="btn-cancel" (click)="closeModal()" [disabled]="isUploading">Annuler</button>
+      <button class="btn-save" (click)="uploadBackground()" [disabled]="!selectedFile || isUploading">
+        <span class="material-symbols-outlined" [class.spin]="isUploading">{{ isUploading ? 'sync' : 'save' }}</span>
+        {{ isUploading ? 'Enregistrement...' : 'Enregistrer' }}
+      </button>
+    </div>
+  </div>
+</div>
