@@ -1,0 +1,142 @@
+<div class="department-docs-container">
+  <div class="header-section">
+    <div class="title-group">
+      <span class="material-symbols-outlined header-icon">corporate_fare</span>
+      <div>
+        <h1>Documents du Département</h1>
+        <p class="subtitle">{{ departmentName || 'Chargement...' }}</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <!-- Upload button: visible only for chef/interim of this department -->
+      <button class="btn-primary" *ngIf="canManageDocs" (click)="openUploadModal()">
+        <span class="material-symbols-outlined">cloud_upload</span>
+        Ajouter un Document
+      </button>
+      <!-- Request button: visible for all users -->
+      <button class="btn-secondary" (click)="openRequestModal()">
+        <span class="material-symbols-outlined">description</span>
+        Demander un Document
+      </button>
+    </div>
+  </div>
+
+  <div class="content-section">
+    <div class="loading-state" *ngIf="isLoading">
+      <div class="spinner"></div>
+      <p>Chargement des documents...</p>
+    </div>
+
+    <div class="empty-state" *ngIf="!isLoading && documents.length === 0">
+      <span class="material-symbols-outlined empty-icon">folder_open</span>
+      <h3>Aucun document public</h3>
+      <p>Ce département n'a pas encore partagé de documents officiels.</p>
+      <button class="btn-primary" *ngIf="canManageDocs" (click)="openUploadModal()" style="margin-top: 1rem;">
+        <span class="material-symbols-outlined">cloud_upload</span>
+        Ajouter le premier document
+      </button>
+    </div>
+
+    <div class="docs-grid" *ngIf="!isLoading && documents.length > 0">
+      <div class="doc-card" *ngFor="let doc of documents">
+        <div class="doc-icon">
+          <span class="material-symbols-outlined" *ngIf="doc.fileType?.includes('pdf')">picture_as_pdf</span>
+          <span class="material-symbols-outlined" *ngIf="doc.fileType?.includes('image')">image</span>
+          <span class="material-symbols-outlined" *ngIf="!doc.fileType?.includes('pdf') && !doc.fileType?.includes('image')">insert_drive_file</span>
+        </div>
+        <div class="doc-info">
+          <h4>{{ doc.title }}</h4>
+          <p class="doc-desc" *ngIf="doc.description">{{ doc.description }}</p>
+          <div class="doc-meta">
+            <span>{{ (doc.fileSize / 1024 / 1024) | number:'1.2-2' }} MB</span>
+            <span>•</span>
+            <span>{{ doc.uploadDate | date:'dd MMM, HH:mm' }}</span>
+          </div>
+        </div>
+        <button class="btn-icon" (click)="downloadDoc(doc)" title="Télécharger">
+          <span class="material-symbols-outlined">download</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Demande Document -->
+<div class="modal-overlay" *ngIf="showRequestModal" (click)="showRequestModal = false">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Demander un Document</h2>
+      <button class="btn-close" (click)="showRequestModal = false">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p class="info-text">Faites une demande détaillée au Chef de Département pour qu'il vous transfère le document requis.</p>
+      
+      <div class="form-group mt-3" *ngIf="departmentName.includes('Administratif') || departmentName.includes('Financier')">
+        <label>Type de document (Optionnel)</label>
+        <select class="form-control" [(ngModel)]="selectedDocType">
+          <option value="">-- Autre / Demande libre --</option>
+          <option value="ATTESTATION_TRAVAIL">Attestation de travail</option>
+          <option value="FICHE_PAIE">Fiche de paie</option>
+          <option value="SOLDE_TOUT_COMPTE">Solde de tout compte</option>
+          <option value="AUTORISATION_CONGE">Autorisation de congé</option>
+        </select>
+      </div>
+      
+      <div class="form-group mt-3">
+        <label>Description de la demande <span *ngIf="!selectedDocType">*</span><span *ngIf="selectedDocType">(Optionnel)</span></label>
+        <textarea [(ngModel)]="requestDescription" rows="4" class="form-control" placeholder="Précisez votre demande ici..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer mt-4">
+      <button class="btn-cancel" (click)="showRequestModal = false">Annuler</button>
+      <button class="btn-submit" (click)="submitRequest()" [disabled]="isRequesting || (!requestDescription.trim() && !selectedDocType)">
+        <span class="spinner-small" *ngIf="isRequesting"></span>
+        <span *ngIf="!isRequesting">Envoyer la demande</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Upload Document (Chef / Intérimaire) -->
+<div class="modal-overlay" *ngIf="showUploadModal" (click)="showUploadModal = false">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Ajouter un Document au Département</h2>
+      <button class="btn-close" (click)="showUploadModal = false">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p class="info-text">Ce document sera visible par tous les employés dans l'espace documents de votre département.</p>
+      
+      <div class="form-group">
+        <label>Fichier *</label>
+        <div class="file-drop-zone" (click)="fileInput.click()">
+          <input type="file" #fileInput hidden (change)="onFileSelected($event)">
+          <span class="material-symbols-outlined upload-icon">cloud_upload</span>
+          <p *ngIf="!uploadFile">Cliquez pour sélectionner un fichier</p>
+          <p *ngIf="uploadFile" class="selected-file">{{ uploadFile.name }}</p>
+        </div>
+      </div>
+      
+      <div class="form-group mt-3">
+        <label>Titre du document *</label>
+        <input type="text" [(ngModel)]="uploadTitle" class="form-control" placeholder="Procédure de validation interne...">
+      </div>
+      
+      <div class="form-group mt-3">
+        <label>Description (optionnel)</label>
+        <textarea [(ngModel)]="uploadDescription" rows="3" class="form-control" placeholder="Brève description du contenu..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer mt-4">
+      <button class="btn-cancel" (click)="showUploadModal = false">Annuler</button>
+      <button class="btn-submit" (click)="submitUpload()" [disabled]="isUploading || !uploadFile || !uploadTitle.trim()">
+        <span class="spinner-small" *ngIf="isUploading"></span>
+        <span *ngIf="!isUploading">Publier le document</span>
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,16 @@
+<div class="announcement-banner" *ngIf="isVisible && announcements.length > 0">
+  <div class="banner-content">
+    <div class="icon-container">
+      <span class="material-symbols-outlined">campaign</span>
+    </div>
+    <div class="message-container">
+      <div class="announcement-item slide-in">
+        <strong>{{ announcements[currentIndex].title }} :</strong>
+        <span>{{ announcements[currentIndex].message }}</span>
+      </div>
+    </div>
+  </div>
+  <button class="btn-close" (click)="closeBanner()">
+    <span class="material-symbols-outlined">close</span>
+  </button>
+</div>

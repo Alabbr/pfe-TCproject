@@ -14,6 +14,7 @@ public class CloudinaryService {
 
     private final Cloudinary cloudinary;
 
+    // Constructeur : initialise le client Cloudinary avec les credentials (cloud_name, api_key, api_secret)
     public CloudinaryService(
             @Value("${cloudinary.cloud_name}") String cloudName,
             @Value("${cloudinary.api_key}") String apiKey,
@@ -27,11 +28,13 @@ public class CloudinaryService {
         ));
     }
 
+    // Upload une image sur Cloudinary et retourne l'URL publique
     public String uploadImage(MultipartFile file) throws IOException {
         Map uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
         return uploadResult.get("url").toString();
     }
 
+    // Upload n'importe quel type de fichier (PDF, docx, vidéo, etc.) sur Cloudinary
     public Map uploadFile(MultipartFile file) throws IOException {
         // resource_type "auto" allows uploading pdf, docx, videos, etc.
         return cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(

@@ -82,7 +82,7 @@
             </div>
             <div class="user-info">
               <h4>{{ user.fullName }}</h4>
-              <p>{{ user.role }} • {{ user.departmentName }}</p>
+              <p>{{ user.role | roleFormat }} • {{ user.departmentName }}</p>
             </div>
             <div class="activity-score">
               <div class="score-bar-bg">
@@ -121,6 +121,51 @@
       </div>
     </div>
   </div>
+  <!-- Transfer Requests Row -->
+  <div class="dash-lists-row mt-4" style="margin-top: 24px;">
+    <div class="dash-list-card" style="width: 100%;">
+      <div class="card-header border-primary">
+        <h2><span class="material-symbols-outlined text-primary">swap_horiz</span> Demandes de Transfert en Attente</h2>
+        <span class="badge badge-primary" *ngIf="pendingTransfers.length > 0">{{ pendingTransfers.length }}</span>
+      </div>
+      <div class="card-body p-0">
+        <div class="pending-list" *ngIf="pendingTransfers.length > 0; else noTransfers">
+          <div class="pending-item" *ngFor="let req of pendingTransfers" style="display: flex; justify-content: space-between; align-items: center; padding: 16px; border-bottom: 1px solid var(--color-border);">
+            <div class="transfer-info">
+              <h4>{{ req.employee?.firstName }} {{ req.employee?.lastName }}</h4>
+              <p>
+                De <strong>{{ req.employee?.department?.name || 'Aucun' }}</strong> 
+                <span class="material-symbols-outlined" style="vertical-align: middle; font-size: 16px;">arrow_right_alt</span> 
+                Vers <strong>{{ req.targetDepartment?.name }}</strong>
+              </p>
+              <p class="text-muted" style="font-size: 13px; margin-top: 4px;" *ngIf="req.newJobPosition">
+                <span class="material-symbols-outlined" style="vertical-align: middle; font-size: 14px;">work</span> 
+                Poste proposé : {{ req.newJobPosition?.name }}
+              </p>
+              <p class="text-muted" style="font-size: 13px; margin-top: 4px; font-style: italic;">
+                "{{ req.comment }}" - par {{ req.requestedBy?.firstName }} {{ req.requestedBy?.lastName }} le {{ req.requestDate | date:'shortDate' }}
+              </p>
+            </div>
+            <div class="transfer-actions" style="display: flex; gap: 8px;">
+              <button class="btn btn-icon btn-success-light" title="Valider le transfert" (click)="processTransfer(req.id!, true)" [disabled]="isProcessingTransfer">
+                <span class="material-symbols-outlined">check</span>
+              </button>
+              <button class="btn btn-icon btn-danger-light" title="Refuser le transfert" (click)="processTransfer(req.id!, false)" [disabled]="isProcessingTransfer">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        <ng-template #noTransfers>
+          <div class="empty-state">
+            <span class="material-symbols-outlined">done_all</span>
+            <p>Aucune demande de transfert en attente.</p>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+
 </ng-container>
 
 <!-- CHEF DASHBOARD -->

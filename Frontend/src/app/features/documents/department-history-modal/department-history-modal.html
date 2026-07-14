@@ -1,0 +1,91 @@
+<div class="modal-overlay" (click)="close.emit()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="title-section">
+        <span class="material-symbols-outlined">history</span>
+        <div>
+          <h2>Historique des Téléversements</h2>
+          <p class="subtitle">Suivi des documents envoyés au sein du département</p>
+        </div>
+      </div>
+      <button class="close-btn" (click)="close.emit()">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="loading-state" *ngIf="isLoading">
+        <div class="spinner"></div>
+        <p>Chargement de l'historique...</p>
+      </div>
+
+      <div class="empty-state" *ngIf="!isLoading && history.length === 0">
+        <span class="material-symbols-outlined empty-icon">draft</span>
+        <h3>Aucun historique</h3>
+        <p>Aucun document n'a été envoyé récemment dans ce département.</p>
+      </div>
+
+      <div class="history-list" *ngIf="!isLoading && history.length > 0">
+        <div class="history-card" *ngFor="let item of history">
+          
+          <!-- SENDER -->
+          <div class="user-block sender">
+            <div class="avatar-circle">
+              {{ item.document.uploader?.firstName?.charAt(0) }}{{ item.document.uploader?.lastName?.charAt(0) }}
+            </div>
+            <div class="user-details">
+              <span class="label">Expéditeur</span>
+              <strong>{{ item.document.uploader?.firstName }} {{ item.document.uploader?.lastName }}</strong>
+              <small>{{ item.document.uploader?.departmentName || 'Aucun département' }}</small>
+            </div>
+          </div>
+
+          <div class="connection-line">
+            <span class="material-symbols-outlined arrow-icon">arrow_right_alt</span>
+            <span class="time-badge">{{ item.document.uploadDate | date:'dd MMM yyyy, HH:mm' }}</span>
+          </div>
+
+          <!-- RECIPIENT -->
+          <div class="user-block recipient">
+            <div class="avatar-circle" *ngIf="item.recipient">
+              {{ item.recipient?.firstName?.charAt(0) }}{{ item.recipient?.lastName?.charAt(0) }}
+            </div>
+            <div class="avatar-circle public-avatar" *ngIf="!item.recipient">
+              <span class="material-symbols-outlined">public</span>
+            </div>
+            <div class="user-details">
+              <span class="label">Destinataire</span>
+              <strong *ngIf="item.recipient">{{ item.recipient?.firstName }} {{ item.recipient?.lastName }}</strong>
+              <strong *ngIf="!item.recipient">Public (Département)</strong>
+              <small *ngIf="item.recipient">{{ item.recipient?.departmentName || 'Aucun département' }}</small>
+              <small *ngIf="!item.recipient">Visible par tous</small>
+            </div>
+          </div>
+
+          <!-- DOCUMENT INFO -->
+          <div class="document-block">
+            <div class="doc-icon">
+              <span class="material-symbols-outlined" *ngIf="item.document.fileType?.includes('pdf')">picture_as_pdf</span>
+              <span class="material-symbols-outlined" *ngIf="item.document.fileType?.includes('image')">image</span>
+              <span class="material-symbols-outlined" *ngIf="!item.document.fileType?.includes('pdf') && !item.document.fileType?.includes('image')">insert_drive_file</span>
+            </div>
+            <div class="doc-details">
+              <strong>{{ item.document.title }}</strong>
+              <span class="doc-size">{{ (item.document.fileSize / 1024 / 1024) | number:'1.2-2' }} MB</span>
+            </div>
+            <div class="status-badges">
+              <span class="badge badge-warning" *ngIf="item.validationStatus === 'PENDING'">En validation</span>
+              <span class="badge badge-success" *ngIf="item.validationStatus === 'VALIDATED'">Validé</span>
+              <span class="badge badge-danger" *ngIf="item.validationStatus === 'REJECTED'">Rejeté</span>
+              <span class="badge badge-info" *ngIf="item.validationStatus === 'NOT_REQUIRED'">Direct</span>
+            </div>
+            <button class="btn-download" (click)="downloadDoc(item.document.id, item.document.originalFileName)" title="Télécharger">
+              <span class="material-symbols-outlined">download</span>
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -7,11 +7,12 @@ import { DepartmentService } from '../../../core/services/department.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { RoleFormatPipe } from '../../../shared/pipes/role-format.pipe';
 
 @Component({
   selector: 'app-team-chat',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RoleFormatPipe],
   templateUrl: './team-chat.html',
   styleUrl: './team-chat.scss',
   encapsulation: ViewEncapsulation.None
@@ -147,8 +148,18 @@ export class TeamChat implements OnInit, OnDestroy {
 
   loadChannels() {
     this.channels = [
-      { id: 'general', name: 'general', unread: 0, desc: 'Canal général de Tunisie Clearing · Annonces et discussions transverses' }
+      { id: 'general', name: 'général', unread: 0, desc: 'Canal général de Tunisie Clearing · Annonces et discussions transverses' }
     ];
+
+    const isManagement = ['SUPER_ADMIN', 'DIRECTEUR_GENERAL', 'DIRECTEUR'].includes(this.currentUser.role);
+    if (isManagement) {
+      this.channels.push({
+        id: 'direction',
+        name: 'direction',
+        unread: 0,
+        desc: 'Canal réservé à la Direction et aux Chefs de Département'
+      });
+    }
     
     this.departmentService.getDepartments().subscribe(depts => {
       // Les RH et SUPER_ADMIN peuvent potentiellement voir tous les canaux, sinon seulement le canal de leur département
@@ -175,6 +186,7 @@ export class TeamChat implements OnInit, OnDestroy {
         name: u.firstName + ' ' + u.lastName,
         email: u.email,
         role: u.role,
+        jobPositionName: u.jobPositionName,
         avatar: u.firstName.charAt(0) + u.lastName.charAt(0),
         profilePictureUrl: u.profilePictureUrl,
         color: u.profilePictureUrl ? 'transparent' : '#1A4A8A', // fallback color

@@ -1,0 +1,153 @@
+<div class="usr-page-header">
+  <div class="usr-header-left">
+    <div class="usr-header-icon">
+      <span class="material-symbols-outlined">admin_panel_settings</span>
+    </div>
+    <div>
+      <h1 class="usr-page-title">Gestion des Accès & Utilisateurs</h1>
+      <p class="usr-page-subtitle" *ngIf="isSuperAdmin()">Gérez les rôles des employés et configurez les permissions globales.</p>
+      <p class="usr-page-subtitle" *ngIf="!isSuperAdmin()">Gérez les rôles des employés de votre département.</p>
+    </div>
+  </div>
+</div>
+
+<div class="access-container mt-4">
+  <!-- 3-Column Layout -->
+  <div class="master-detail-layout">
+    
+    <!-- COLUMN 1: Départements -->
+    <div class="pane pane-departments glass-effect">
+      <h3 class="pane-title"><span class="material-symbols-outlined">domain</span> 1. Département</h3>
+      
+      <div class="pane-content" *ngIf="isSuperAdmin()">
+        <p class="info-text">Sélectionnez un département pour voir ses employés.</p>
+        <div class="list-group">
+          <button 
+            *ngFor="let dep of departments" 
+            class="list-item" 
+            [class.active]="selectedDepartment?.id === dep.id"
+            (click)="selectDepartment(dep)">
+            <span class="item-icon"><span class="material-symbols-outlined">corporate_fare</span></span>
+            <span class="item-label">{{ dep.name }}</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="pane-content" *ngIf="!isSuperAdmin()">
+        <p class="info-text">Votre département :</p>
+        <div class="static-card active" *ngIf="selectedDepartment">
+          <span class="item-icon"><span class="material-symbols-outlined">corporate_fare</span></span>
+          <span class="item-label">{{ selectedDepartment.name }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- COLUMN 2: Utilisateurs -->
+    <div class="pane pane-users glass-effect">
+      <h3 class="pane-title"><span class="material-symbols-outlined">group</span> 2. Utilisateurs</h3>
+      
+      <div class="pane-content">
+        <div class="empty-state-small" *ngIf="!selectedDepartment">
+          <span class="material-symbols-outlined">arrow_back</span>
+          <p>Sélectionnez un département</p>
+        </div>
+
+        <div class="empty-state-small" *ngIf="selectedDepartment && departmentUsers.length === 0">
+          <span class="material-symbols-outlined">inbox</span>
+          <p>Aucun employé trouvé.</p>
+        </div>
+
+        <div class="users-list" *ngIf="departmentUsers.length > 0">
+          <div class="user-card" *ngFor="let user of departmentUsers" 
+               [class.selected]="selectedUser?.id === user.id" 
+               (click)="selectUser(user)">
+            <div class="user-avatar">
+              <img *ngIf="user.profilePictureUrl" [src]="user.profilePictureUrl" alt="avatar">
+              <span *ngIf="!user.profilePictureUrl" class="material-symbols-outlined">person</span>
+            </div>
+            <div class="user-info">
+              <div class="user-name">{{ user.fullName || user.firstName + ' ' + user.lastName }}</div>
+              <div class="user-job">{{ user.jobPositionName || 'Poste non défini' }}</div>
+            </div>
+            <div class="user-badge" [attr.data-role]="user.role">{{ roleLabel(user.role) }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COLUMN 3: Configuration -->
+    <div class="pane pane-config glass-effect">
+      <h3 class="pane-title"><span class="material-symbols-outlined">tune</span> 3. Configuration de l'Accès</h3>
+      
+      <div class="pane-content p-0">
+        <div class="empty-state-large" *ngIf="!selectedUser">
+          <span class="material-symbols-outlined">touch_app</span>
+          <p>Sélectionnez un employé pour gérer son accès</p>
+        </div>
+
+        <div class="config-wrapper" *ngIf="selectedUser">
+          
+          <!-- User Profile Section -->
+          <div class="profile-header">
+            <div class="profile-avatar-large">
+              <img *ngIf="selectedUser.profilePictureUrl" [src]="selectedUser.profilePictureUrl" alt="avatar">
+              <span *ngIf="!selectedUser.profilePictureUrl" class="material-symbols-outlined">account_circle</span>
+            </div>
+            <div class="profile-details">
+              <h4>{{ selectedUser.fullName || selectedUser.firstName + ' ' + selectedUser.lastName }}</h4>
+              <p class="email">{{ selectedUser.email }}</p>
+              <p class="job"><span class="material-symbols-outlined">work</span> {{ selectedUser.jobPositionName || 'Non défini' }}</p>
+            </div>
+          </div>
+
+          <!-- Role Selection (Super Admin only) -->
+          <div class="role-update-section" *ngIf="isSuperAdmin()">
+            <label class="section-label">Changer le Rôle</label>
+            <div class="role-select-wrapper">
+              <select class="form-control premium-select" [(ngModel)]="selectedUserRole" (change)="onUserRoleChange()">
+                <option *ngFor="let role of availableRoles" [value]="role">{{ roleLabel(role) }}</option>
+              </select>
+              <button class="btn btn-primary" (click)="updateUserRole()" [disabled]="isUpdatingUser || selectedUserRole === selectedUser.role">
+                <span class="spinner-small" *ngIf="isUpdatingUser"></span>
+                <span *ngIf="!isUpdatingUser">Appliquer le rôle</span>
+              </button>
+            </div>
+            <small class="help-text">Le changement de rôle affecte instantanément les permissions de l'utilisateur.</small>
+          </div>
+
+          <!-- Permissions Section -->
+          <div class="permissions-section">
+            <div class="section-header-flex">
+              <label class="section-label mb-0" *ngIf="isSuperAdmin()">Permissions globales pour <strong>{{ roleLabel(selectedUserRole) }}</strong></label>
+              <label class="section-label mb-0" *ngIf="!isSuperAdmin()">Permissions de <strong>{{ selectedUser.fullName || selectedUser.firstName + ' ' + selectedUser.lastName }}</strong></label>
+              <span class="badge badge-warning" *ngIf="!canEditPermissions()">Lecture seule</span>
+              <span class="badge badge-success" *ngIf="canEditPermissions() && !isSuperAdmin()">Modifiable</span>
+            </div>
+            
+            <p class="help-text mb-3" *ngIf="isSuperAdmin()">Activez ou désactivez les fonctionnalités pour tous les utilisateurs ayant ce rôle.</p>
+            <p class="help-text mb-3" *ngIf="!isSuperAdmin() && canEditPermissions()">Configurez l'accès de cet employé aux différentes fonctionnalités.</p>
+            <p class="help-text mb-3" *ngIf="!canEditPermissions() && !isSuperAdmin()">Vous ne pouvez pas modifier les permissions de cet utilisateur.</p>
+            
+            <div class="permissions-grid">
+              <div class="permission-toggle" *ngFor="let permission of getVisiblePermissions()" [class.readonly]="!isPermissionEditable(permission)">
+                <span class="perm-name">{{ permissionLabel(permission) }}</span>
+                <label class="switch">
+                  <input type="checkbox" [checked]="hasPermission(permission)" (change)="togglePermission(permission, $event)" [disabled]="!isPermissionEditable(permission)">
+                  <span class="slider round"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="permissions-actions mt-4" *ngIf="canEditPermissions()">
+              <button class="btn btn-secondary-outline" (click)="savePermissions()" [disabled]="isUpdatingPermissions">
+                <span class="spinner-small" *ngIf="isUpdatingPermissions"></span>
+                <span *ngIf="!isUpdatingPermissions">Sauvegarder les permissions</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

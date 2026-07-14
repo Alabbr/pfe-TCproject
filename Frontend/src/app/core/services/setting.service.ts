@@ -10,10 +10,12 @@ export class SettingService {
 
   constructor(private http: HttpClient) {}
 
+  // Récupère la valeur d'un paramètre par sa clé
   getSetting(key: string): Observable<{key: string, value: string}> {
     return this.http.get<{key: string, value: string}>(`${this.API_URL}/${key}`);
   }
 
+  // Upload une nouvelle image d'arrière-plan de connexion
   uploadLoginBackground(file: File): Observable<{key: string, value: string}> {
     const formData = new FormData();
     formData.append('file', file);

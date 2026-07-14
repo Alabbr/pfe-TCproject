@@ -7,11 +7,12 @@ import { AuthService } from '../../../core/services/auth.service';
 import { User, Department, AuthResponse } from '../../../core/models/auth.model';
 import { ToastService } from '../../../shared/services/toast';
 import { ProfileModalComponent } from '../../../shared/components/profile-modal/profile-modal';
+import { RoleFormatPipe } from '../../../shared/pipes/role-format.pipe';
 
 @Component({
   selector: 'app-users-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, ProfileModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, ProfileModalComponent, RoleFormatPipe],
   templateUrl: './users-list.html',
   styleUrl: './users-list.scss'
 })

@@ -13,26 +13,33 @@ import { AuthResponse } from '../../../core/models/auth.model';
 import { ChefDashboard } from '../chef-dashboard/chef-dashboard';
 import { EmployeDashboard } from '../employe-dashboard/employe-dashboard';
 import { SuperAdminDashboardService, SuperAdminStats } from '../../../core/services/super-admin-dashboard.service';
+import { TransferRequestService, TransferRequest } from '../../../core/services/transfer-request.service';
+import { ToastService } from '../../../shared/services/toast';
+import { RoleFormatPipe } from '../../../shared/pipes/role-format.pipe';
 
 echarts.use([PieChart, TooltipComponent, LegendComponent, CanvasRenderer]);
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, KpiCard, NgxEchartsDirective, ChefDashboard, EmployeDashboard],
+  imports: [CommonModule, KpiCard, NgxEchartsDirective, ChefDashboard, EmployeDashboard, RoleFormatPipe],
   templateUrl: './home.html',
   styleUrl: './home.scss'
 })
 export class Home implements OnInit {
   currentUser: AuthResponse | null = null;
   stats: SuperAdminStats | null = null;
+  pendingTransfers: TransferRequest[] = [];
+  isProcessingTransfer = false;
 
   deptChartOptions: EChartsOption = {};
   roleChartOptions: EChartsOption = {};
 
   constructor(
     private authService: AuthService,
-    private adminStatsService: SuperAdminDashboardService
+    private adminStatsService: SuperAdminDashboardService,
+    private transferRequestService: TransferRequestService,
+    private toastService: ToastService
   ) {}
 
   ngOnInit() {
@@ -40,6 +47,7 @@ export class Home implements OnInit {
       this.currentUser = user;
       if (this.isSuperAdmin()) {
         this.loadSuperAdminStats();
+        this.loadPendingTransfers();
       }
     });
   }
@@ -48,6 +56,31 @@ export class Home implements OnInit {
     this.adminStatsService.getStats().subscribe(res => {
       this.stats = res;
       this.initCharts(res);
+    });
+  }
+
+  loadPendingTransfers() {
+    this.transferRequestService.getPendingRequests().subscribe({
+      next: (reqs) => this.pendingTransfers = reqs,
+      error: (err) => console.error('Erreur chargement transferts', err)
+    });
+  }
+
+  processTransfer(requestId: number, isApproved: boolean) {
+    if (!requestId) return;
+    this.isProcessingTransfer = true;
+    
+    this.transferRequestService.processRequest(requestId, isApproved).subscribe({
+      next: () => {
+        this.toastService.success('Succès', isApproved ? 'Transfert validé avec succès.' : 'Transfert refusé.');
+        this.loadPendingTransfers(); // Refresh the list
+        this.isProcessingTransfer = false;
+      },
+      error: (err) => {
+        this.toastService.error('Erreur', 'Impossible de traiter la demande.');
+        this.isProcessingTransfer = false;
+        console.error(err);
+      }
     });
   }
 
@@ -100,7 +133,7 @@ export class Home implements OnInit {
   }
 
   isChef(): boolean {
-    return this.currentUser?.role === 'DIRECTEUR' || this.currentUser?.role === 'RESPONSABLE';
+    return this.currentUser?.role === 'DIRECTEUR' || this.currentUser?.role === 'RESPONSABLE' || this.currentUser?.role === 'DIRECTEUR_GENERAL';
   }
 
   isEmploye(): boolean {

@@ -1,0 +1,92 @@
+.announcement-banner {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+  color: white;
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(13, 43, 94, 0.3);
+  position: relative;
+  z-index: 100;
+  overflow: hidden;
+
+  .banner-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+
+    .icon-container {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      span {
+        font-size: 20px;
+        animation: pulse 2s infinite;
+      }
+    }
+
+    .message-container {
+      flex: 1;
+      overflow: hidden;
+      
+      .announcement-item {
+        font-size: 0.95rem;
+        
+        strong {
+          font-weight: 600;
+          margin-right: 0.5rem;
+          color: rgba(255,255,255,0.9);
+        }
+
+        span {
+          font-weight: 400;
+        }
+      }
+    }
+  }
+
+  .btn-close {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: all 0.2s;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+    }
+  }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.slide-in {
+  animation: slideIn 0.5s ease-out forwards;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

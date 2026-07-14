@@ -1,0 +1,74 @@
+<div class="modal-overlay" (click)="close.emit()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="header-left">
+        <span class="material-symbols-outlined header-icon">rule</span>
+        <div>
+          <h2>Documents à Valider</h2>
+          <p>Documents en attente de votre approbation</p>
+        </div>
+      </div>
+      <button class="close-btn" (click)="close.emit()">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="loading-state" *ngIf="isLoading">
+        <div class="spinner"></div>
+        <p>Récupération des documents...</p>
+      </div>
+
+      <div class="empty-state" *ngIf="!isLoading && inboxItems.length === 0">
+        <span class="material-symbols-outlined">done_all</span>
+        <h3>Tout est à jour !</h3>
+        <p>Vous n'avez aucun document en attente de validation.</p>
+      </div>
+
+      <div class="inbox-list" *ngIf="!isLoading && inboxItems.length > 0">
+        <div class="inbox-item" *ngFor="let item of inboxItems">
+          
+          <div class="item-sender">
+            <div class="avatar-small">
+              <img *ngIf="item.document.uploader?.profilePictureUrl" [src]="item.document.uploader.profilePictureUrl" alt="">
+              <span *ngIf="!item.document.uploader?.profilePictureUrl" class="material-symbols-outlined">person</span>
+            </div>
+            <div class="sender-info">
+              <span class="name">{{ item.document.uploader?.firstName }} {{ item.document.uploader?.lastName }}</span>
+              <span class="role">{{ item.document.uploader?.jobPositionName || item.document.uploader?.role }}</span>
+            </div>
+          </div>
+
+          <div class="item-content">
+            <span class="title">{{ item.document.title }}</span>
+            <span class="desc" *ngIf="item.document.description">{{ item.document.description }}</span>
+            <span class="recipient-badge">Destinataire: {{ item.recipient?.firstName }} {{ item.recipient?.lastName }}</span>
+          </div>
+
+          <div class="item-file">
+            <div class="file-badge">
+              <span class="material-symbols-outlined">{{ getIconForFileType(item.document.fileType) }}</span>
+              {{ formatFileSize(item.document.fileSize) }}
+            </div>
+          </div>
+
+          <div class="item-date">
+            {{ item.document.uploadDate | date:'dd MMM, HH:mm' }}
+          </div>
+          
+          <div class="action-buttons">
+            <button class="btn-icon view" (click)="openDocument(item)" title="Télécharger">
+              <span class="material-symbols-outlined">download</span>
+            </button>
+            <button class="btn-icon validate" (click)="validateDoc(item)" title="Valider">
+              <span class="material-symbols-outlined">check_circle</span>
+            </button>
+            <button class="btn-icon reject" (click)="rejectDoc(item)" title="Rejeter">
+              <span class="material-symbols-outlined">cancel</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

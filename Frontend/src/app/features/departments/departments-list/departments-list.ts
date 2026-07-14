@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { DepartmentService } from '../../../core/services/department.service';
 import { JobPositionService } from '../../../core/services/job-position.service';
 import { UserService } from '../../../core/services/user.service';
@@ -11,7 +11,7 @@ import { ToastService } from '../../../shared/services/toast';
 @Component({
   selector: 'app-departments-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
   templateUrl: './departments-list.html',
   styleUrl: './departments-list.scss'
 })
@@ -236,5 +236,32 @@ export class DepartmentsListComponent implements OnInit {
     if (n.includes('juridique') || n.includes('loi') || n.includes('droit')) return 'gavel';
     if (n.includes('recherche') || n.includes('r&d')) return 'science';
     return 'domain'; // Default modern fallback
+  }
+
+  isAddingJob = false;
+  newJobName = '';
+
+  toggleAddJob() {
+    this.isAddingJob = !this.isAddingJob;
+    if (!this.isAddingJob) {
+      this.newJobName = '';
+    }
+  }
+
+  saveNewJob() {
+    if (!this.newJobName.trim() || !this.selectedDepDetails) return;
+    this.isLoadingDetails = true;
+    this.jobPositionService.createJobPosition(this.selectedDepDetails.id, this.newJobName.trim()).subscribe({
+      next: (job) => {
+        this.departmentJobPositions.push(job);
+        this.toggleAddJob();
+        this.isLoadingDetails = false;
+        this.toastService.success('Succès', 'Poste de travail ajouté');
+      },
+      error: (err) => {
+        this.isLoadingDetails = false;
+        this.toastService.error('Erreur', 'Impossible de créer ce poste');
+      }
+    });
   }
 }

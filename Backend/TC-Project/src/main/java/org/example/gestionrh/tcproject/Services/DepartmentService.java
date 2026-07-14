@@ -19,7 +19,7 @@ public class DepartmentService {
     private final DepartmentRepository departmentRepository;
     private final UserRepository userRepository;
 
-    // ─── Convert Entity → DTO (no recursion) ───
+    // Convertit une entité Department en DTO (sans récursion sur les sous-départements)
     public DepartmentDto toDto(Department dept) {
         return DepartmentDto.builder()
                 .id(dept.getId())
@@ -31,6 +31,7 @@ public class DepartmentService {
                 .build();
     }
 
+    // Retourne la liste de tous les départements actifs
     public List<DepartmentDto> getAllDepartments() {
         return departmentRepository.findAll()
                 .stream()
@@ -39,6 +40,7 @@ public class DepartmentService {
                 .collect(Collectors.toList());
     }
 
+    // Retourne la liste des départements archivés (inactifs)
     public List<DepartmentDto> getArchivedDepartments() {
         return departmentRepository.findAll()
                 .stream()
@@ -47,10 +49,12 @@ public class DepartmentService {
                 .collect(Collectors.toList());
     }
 
+    // Retourne un département par son ID
     public DepartmentDto getDepartmentById(Long id) {
         return toDto(findById(id));
     }
 
+    // Crée un nouveau département (avec parent optionnel)
     @Transactional
     public DepartmentDto createDepartment(DepartmentDto dto) {
         Department dept = Department.builder()
@@ -64,6 +68,7 @@ public class DepartmentService {
         return toDto(departmentRepository.save(dept));
     }
 
+    // Met à jour le nom, la description et le parent d'un département existant
     @Transactional
     public DepartmentDto updateDepartment(Long id, DepartmentDto dto) {
         Department existing = findById(id);
@@ -77,6 +82,7 @@ public class DepartmentService {
         return toDto(departmentRepository.save(existing));
     }
 
+    // Supprime un département (soft delete : le met en inactif)
     @Transactional
     public void deleteDepartment(Long id) {
         Department dept = findById(id);
@@ -84,6 +90,7 @@ public class DepartmentService {
         departmentRepository.save(dept);
     }
 
+    // Restaure un département archivé (le remet actif)
     @Transactional
     public void restoreDepartment(Long id) {
         Department dept = findById(id);
@@ -91,6 +98,7 @@ public class DepartmentService {
         departmentRepository.save(dept);
     }
 
+    // Supprime définitivement un département (uniquement s'il est déjà archivé)
     @Transactional
     public void permanentDeleteDepartment(Long id) {
         Department dept = findById(id);
@@ -100,7 +108,7 @@ public class DepartmentService {
         departmentRepository.deleteById(id);
     }
 
-    // ─── Internal helper ───
+    // Helper interne : cherche un département par ID ou lance une exception
     private Department findById(Long id) {
         return departmentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Département introuvable: " + id));

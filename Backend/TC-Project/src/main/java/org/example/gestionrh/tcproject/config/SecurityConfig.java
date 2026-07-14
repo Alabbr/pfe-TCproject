@@ -41,7 +41,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 // Endpoints publics
-                .requestMatchers("/api/auth/**", "/error", "/ws/**").permitAll()
+                .requestMatchers("/api/auth/login", "/api/auth/register", "/error", "/ws/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/settings/**").permitAll()
                 // Tout le reste nécessite une authentification
                 .anyRequest().authenticated()

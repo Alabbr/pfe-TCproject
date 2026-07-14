@@ -22,6 +22,7 @@ public class ChatMessageService {
     private final UserRepository userRepository;
     private final MessageReactionRepository messageReactionRepository;
 
+    // Sauvegarde un nouveau message (canal ou DM) à partir du DTO reçu via WebSocket
     public ChatMessageDto saveMessage(ChatMessageDto msgDto) {
         User sender = userRepository.findById(msgDto.getSenderId())
                 .orElseThrow(() -> new RuntimeException("Sender not found"));
@@ -46,16 +47,19 @@ public class ChatMessageService {
         return mapToDto(savedMsg);
     }
 
+    // Récupère tous les messages d'un canal (ex: "general") triés par date croissante
     public List<ChatMessageDto> getChannelMessages(String channelId) {
         return chatMessageRepository.findByChannelIdOrderByTimestampAsc(channelId)
                 .stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
+    // Récupère l'historique des messages privés (DM) entre deux utilisateurs
     public List<ChatMessageDto> getDirectMessages(Long userId1, Long userId2) {
         return chatMessageRepository.findDirectMessages(userId1, userId2)
                 .stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
+    // Modifie le contenu d'un message existant (seul l'expéditeur peut modifier son propre message)
     @Transactional
     public ChatMessageDto editMessage(Long messageId, String newContent, Long senderId) {
         ChatMessage msg = chatMessageRepository.findById(messageId)
@@ -72,6 +76,7 @@ public class ChatMessageService {
         return mapToDto(savedMsg);
     }
 
+    // Marque tous les messages non lus d'un expéditeur comme lus pour le destinataire
     @Transactional
     public void markMessagesAsRead(Long senderId, Long readerId) {
         List<ChatMessage> unreadMessages = chatMessageRepository.findDirectMessages(senderId, readerId)
@@ -86,6 +91,7 @@ public class ChatMessageService {
         chatMessageRepository.saveAll(unreadMessages);
     }
 
+    // Ajoute ou retire une réaction emoji sur un message (toggle on/off)
     @Transactional
     public ChatMessageDto toggleReaction(Long messageId, Long userId, String emoji) {
         ChatMessage msg = chatMessageRepository.findById(messageId)
@@ -114,6 +120,7 @@ public class ChatMessageService {
         return mapToDto(chatMessageRepository.findById(messageId).orElse(msg));
     }
 
+    // Convertit une entité ChatMessage en DTO pour l'envoi au frontend (inclut avatar, réactions, etc.)
     private ChatMessageDto mapToDto(ChatMessage msg) {
         String initials = msg.getSender().getFirstName().substring(0, 1) + 
                           msg.getSender().getLastName().substring(0, 1);

@@ -39,7 +39,7 @@
       <span class="dept-tab-badge archived" *ngIf="archivedDepartments.length > 0">{{ archivedDepartments.length }}</span>
     </button>
   </div>
-  <button type="button" class="dept-add-btn" (click)="openDrawer()" *ngIf="activeTab === 'active' && currentUser?.role === 'SUPER_ADMIN'">
+  <button type="button" class="dept-add-btn" (click)="openDrawer()" *ngIf="activeTab === 'active' && (currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'DIRECTEUR_GENERAL')">
     <span class="material-symbols-outlined">add</span>
     <span>Nouveau département</span>
   </button>
@@ -55,7 +55,7 @@
   </div>
   <h3>{{ activeTab === 'active' ? 'Aucun département configuré' : 'Aucun département archivé' }}</h3>
   <p>{{ activeTab === 'active' ? 'Commencez par créer le premier département de votre organisation.' : 'Les départements désactivés apparaîtront ici.' }}</p>
-  <button type="button" class="dept-add-btn" (click)="openDrawer()" *ngIf="activeTab === 'active' && currentUser?.role === 'SUPER_ADMIN'">
+  <button type="button" class="dept-add-btn" (click)="openDrawer()" *ngIf="activeTab === 'active' && (currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'DIRECTEUR_GENERAL')">
     <span class="material-symbols-outlined">add</span>
     <span>Créer le premier département</span>
   </button>
@@ -78,7 +78,7 @@
       <div class="dept-card-icon">
         <span class="material-symbols-outlined">{{ getDepartmentIcon(dep.name) }}</span>
       </div>
-      <div class="dept-card-actions" *ngIf="activeTab === 'active' && currentUser?.role === 'SUPER_ADMIN'">
+      <div class="dept-card-actions" *ngIf="activeTab === 'active' && (currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'DIRECTEUR_GENERAL')">
         <button class="dept-action-btn dept-action-edit" (click)="openDrawer(dep); $event.stopPropagation()" title="Modifier">
           <span class="material-symbols-outlined">edit</span>
         </button>
@@ -86,7 +86,7 @@
           <span class="material-symbols-outlined">archive</span>
         </button>
       </div>
-      <div class="dept-card-actions" *ngIf="activeTab === 'archived' && currentUser?.role === 'SUPER_ADMIN'">
+      <div class="dept-card-actions" *ngIf="activeTab === 'archived' && (currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'DIRECTEUR_GENERAL')">
         <button class="dept-restore-btn" (click)="restoreDep(dep.id); $event.stopPropagation()">
           <span class="material-symbols-outlined">settings_backup_restore</span>
           <span>Restaurer</span>
@@ -137,7 +137,7 @@
     </div>
     <div class="dept-list-desc">{{ dep.description || '—' }}</div>
     <div class="dept-list-actions">
-      <ng-container *ngIf="activeTab === 'active' && currentUser?.role === 'SUPER_ADMIN'">
+      <ng-container *ngIf="activeTab === 'active' && (currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'DIRECTEUR_GENERAL')">
         <button class="dept-action-btn dept-action-edit" (click)="openDrawer(dep); $event.stopPropagation()" title="Modifier">
           <span class="material-symbols-outlined">edit</span>
         </button>
@@ -145,7 +145,7 @@
           <span class="material-symbols-outlined">archive</span>
         </button>
       </ng-container>
-      <ng-container *ngIf="activeTab === 'archived' && currentUser?.role === 'SUPER_ADMIN'">
+      <ng-container *ngIf="activeTab === 'archived' && (currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'DIRECTEUR_GENERAL')">
         <button class="dept-restore-btn" (click)="restoreDep(dep.id); $event.stopPropagation()">
           <span class="material-symbols-outlined">settings_backup_restore</span>
           <span>Restaurer</span>
@@ -275,12 +275,34 @@
 
       <!-- Job Positions Section -->
       <div class="details-section">
-        <div class="details-section-header">
-          <span class="material-symbols-outlined">badge</span>
-          <h3>Postes de Travail (Gestions)</h3>
+        <div class="details-section-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="material-symbols-outlined">badge</span>
+            <h3 style="margin: 0;">Postes de Travail (Gestions)</h3>
+          </div>
+          <button *ngIf="!isAddingJob && (currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'DIRECTEUR_GENERAL')" class="btn btn-sm btn-outline-primary" (click)="toggleAddJob()" style="display: flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--primary-color); background: transparent; color: var(--primary-color); cursor: pointer;">
+            <span class="material-symbols-outlined" style="font-size: 16px;">add</span>
+            Ajouter un poste
+          </button>
         </div>
 
-        <div class="details-empty" *ngIf="departmentJobPositions.length === 0">
+        <!-- Add Job Form -->
+        <div class="add-job-form" *ngIf="isAddingJob" style="background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px; margin-top: 12px; margin-bottom: 16px;">
+          <p style="margin-top: 0; margin-bottom: 8px; font-weight: 500; font-size: 14px; color: #333;">Créer un nouveau poste</p>
+          <div style="display: flex; gap: 8px; align-items: stretch;">
+            <input type="text" [(ngModel)]="newJobName" placeholder="Saisir le nom du poste (ex: RSSI)..." style="flex: 1; padding: 10px 12px; border: 1px solid #ccc; border-radius: 6px; outline: none; font-size: 14px;">
+            <button (click)="saveNewJob()" [disabled]="!newJobName.trim() || isLoadingDetails" style="padding: 0 16px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 600; min-width: 120px;">
+               <span class="material-symbols-outlined dept-spin" *ngIf="isLoadingDetails" style="font-size: 18px; margin-right: 4px;">sync</span>
+               <span class="material-symbols-outlined" *ngIf="!isLoadingDetails" style="font-size: 18px; margin-right: 4px;">check_circle</span>
+               Enregistrer
+            </button>
+            <button (click)="toggleAddJob()" style="padding: 0 12px; background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Annuler">
+               <span class="material-symbols-outlined" style="font-size: 18px;">close</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="details-empty" *ngIf="departmentJobPositions.length === 0 && !isAddingJob">
           <span class="material-symbols-outlined">info</span>
           <p>Aucun poste configuré pour ce département.</p>
         </div>

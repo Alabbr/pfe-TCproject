@@ -62,7 +62,14 @@ export class ProfileModalComponent implements OnInit {
 
   formatRole(role?: string): string {
     if (!role) return '';
-    return role.replace(/_/g, ' ');
+    switch (role) {
+      case 'SUPER_ADMIN': return 'Super Administrateur';
+      case 'DIRECTEUR_GENERAL': return 'Directeur Général';
+      case 'DIRECTEUR': return 'Chef de Département';
+      case 'RESPONSABLE': return 'Responsable';
+      case 'EMPLOYE': return 'Employé';
+      default: return role.replace(/_/g, ' ');
+    }
   }
 
   onFileSelected(event: any) {

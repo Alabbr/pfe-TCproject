@@ -1,0 +1,202 @@
+<div class="employee-tasks-container">
+  <div class="header-section">
+    <div class="title-group">
+      <span class="material-symbols-outlined header-icon">task_alt</span>
+      <div>
+        <h1>Mes Tâches Assignées</h1>
+        <p class="subtitle">Gérez et générez les documents demandés par vos collaborateurs, avec une interface moderne.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="content-section">
+    <div class="loading-state" *ngIf="isLoading">
+      <div class="spinner"></div>
+      <h3>Chargement de vos tâches...</h3>
+      <p>Veuillez patienter pendant la récupération des données.</p>
+    </div>
+
+    <div class="empty-state" *ngIf="!isLoading && tasks.length === 0">
+      <span class="material-symbols-outlined empty-icon">check_circle</span>
+      <h3>Aucune tâche en attente</h3>
+      <p>Excellente nouvelle ! Vous n'avez aucune demande de document à traiter pour le moment.</p>
+    </div>
+
+    <!-- Task List -->
+    <div class="task-list" *ngIf="!isLoading && tasks.length > 0 && !selectedTask">
+      <div class="task-card" *ngFor="let task of tasks">
+        <div class="task-header">
+          <div class="requester-info">
+            <span class="material-symbols-outlined person-icon">person</span>
+            <div>
+              <strong>{{ task.requester.firstName }} {{ task.requester.lastName }}</strong>
+              <p class="role-text">{{ task.requester.jobPosition || task.requester.role }}</p>
+            </div>
+          </div>
+          <span class="badge-info">{{ task.documentType?.replace('_', ' ') }}</span>
+        </div>
+        <p class="task-desc">"{{ task.description }}"</p>
+        <div class="task-meta">
+          <span class="date">{{ task.createdAt | date:'dd MMM yyyy, HH:mm' }}</span>
+          <button class="btn-primary" (click)="openTask(task)">
+            Traiter
+            <span class="material-symbols-outlined">arrow_forward</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Task Editor Workspace -->
+    <div class="editor-workspace" *ngIf="selectedTask">
+      <div class="workspace-header">
+        <button class="btn-back" (click)="closeTask()">
+          <span class="material-symbols-outlined">arrow_back</span> Retour
+        </button>
+        <h2>Génération : {{ selectedTask.documentType?.replace('_', ' ') }}</h2>
+        <button class="btn-primary" (click)="generateAndSend()" [disabled]="isGenerating">
+          <span class="spinner-small" *ngIf="isGenerating"></span>
+          <span *ngIf="!isGenerating">Générer et Envoyer le Document</span>
+          <span class="material-symbols-outlined" *ngIf="!isGenerating">send</span>
+        </button>
+      </div>
+
+      <div class="workspace-split">
+        <!-- Formulaire de saisie -->
+        <div class="workspace-form form-panel">
+          <h3>Informations du Document</h3>
+          <p class="info-text">Vérifiez et complétez les informations ci-dessous. Le rendu sur le document à droite sera mis à jour en temps réel.</p>
+
+          <div class="form-group">
+            <label>Nom complet du collaborateur</label>
+            <input type="text" class="form-control" [(ngModel)]="templateData.fullName" />
+          </div>
+          
+          <div class="form-group">
+            <label>Département</label>
+            <input type="text" class="form-control" [(ngModel)]="templateData.department" />
+          </div>
+
+          <div class="form-group">
+            <label>Poste occupé</label>
+            <input type="text" class="form-control" [(ngModel)]="templateData.jobPosition" />
+          </div>
+
+          <div class="form-group" *ngIf="selectedTask.documentType === 'ATTESTATION_TRAVAIL'">
+            <label>Date d'embauche</label>
+            <input type="date" class="form-control" [(ngModel)]="templateData.hireDate" />
+          </div>
+
+          <div class="form-group" *ngIf="selectedTask.documentType === 'FICHE_PAIE'">
+            <label>Salaire de base mensuel (DT)</label>
+            <input type="number" class="form-control" [(ngModel)]="templateData.salary" />
+          </div>
+
+          <div class="form-group">
+            <label>Fait à</label>
+            <input type="text" class="form-control" [(ngModel)]="templateData.location" />
+          </div>
+
+          <div class="form-group">
+            <label>Date du document</label>
+            <input type="date" class="form-control" [(ngModel)]="templateData.currentDate" />
+          </div>
+        </div>
+
+        <!-- Aperçu en temps réel (Ce qui sera imprimé) -->
+        <div class="workspace-preview preview-panel">
+          <div id="document-template" style="width: 210mm; height: 297mm; box-sizing: border-box; background: #ffffff; padding: 25mm; font-family: 'Times New Roman', Times, serif; color: #000000; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); position: relative; overflow: hidden;">
+            
+            <!-- HEADER -->
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1a1a2e; padding-bottom: 20px; margin-bottom: 40px;">
+              <div>
+                <h2 style="margin: 0; font-size: 28px; color: #1a1a2e; letter-spacing: 4px; font-weight: 800; font-family: 'Arial', sans-serif;">TUNISIE CLEARING</h2>
+                <p style="margin: 8px 0 0 0; font-size: 13px; color: #555555; font-style: italic; font-family: 'Arial', sans-serif;">Département Administratif & Financier</p>
+                <p style="margin: 4px 0 0 0; font-size: 11px; color: #888888; font-family: 'Arial', sans-serif;">Centre Urbain Nord, 1082 Tunis, Tunisie</p>
+              </div>
+              <div style="text-align: right;">
+                <p style="margin: 0; font-size: 11px; color: #666666; font-family: 'Arial', sans-serif;">Réf: RH/{{ templateData.currentDate | date:'yyyy' }}/{{ selectedTask.id.toString().padStart(4, '0') }}</p>
+                <p style="margin: 4px 0 0 0; font-size: 11px; color: #666666; font-family: 'Arial', sans-serif;">{{ templateData.currentDate | date:'dd/MM/yyyy' }}</p>
+              </div>
+            </div>
+
+            <!-- TITLE -->
+            <div style="text-align: center; margin-bottom: 50px;">
+              <h1 style="font-size: 26px; text-transform: uppercase; letter-spacing: 3px; color: #1a1a2e; margin: 0; display: inline-block; border-bottom: 3px double #1a1a2e; padding-bottom: 10px;">
+                <span *ngIf="selectedTask.documentType === 'ATTESTATION_TRAVAIL'">ATTESTATION DE TRAVAIL</span>
+                <span *ngIf="selectedTask.documentType === 'FICHE_PAIE'">FICHE DE PAIE</span>
+                <span *ngIf="selectedTask.documentType === 'SOLDE_TOUT_COMPTE'">SOLDE DE TOUT COMPTE</span>
+                <span *ngIf="selectedTask.documentType === 'AUTORISATION_CONGE'">AUTORISATION DE CONGÉ</span>
+              </h1>
+            </div>
+
+            <!-- BODY -->
+            <div style="font-size: 14px; line-height: 2; text-align: justify;">
+              <p style="margin-bottom: 30px;">Nous soussignés, la <strong>Direction Générale</strong> de la société <strong>TUNISIE CLEARING</strong>, société anonyme au capital social de 5 000 000 DT, ayant son siège social au Centre Urbain Nord - 1082 Tunis, attestons par la présente que :</p>
+              
+              <!-- INFO BLOCK -->
+              <div style="margin: 30px 0; padding: 25px 30px; background: #f7f8fc; border-left: 5px solid #1a1a2e; border-radius: 0 8px 8px 0;">
+                <div style="display: flex; margin-bottom: 14px;">
+                  <span style="flex: 0 0 220px; font-weight: bold; color: #333333;">Monsieur / Madame</span>
+                  <span style="flex: 1; color: #111111; font-weight: 600;">: {{ templateData.fullName }}</span>
+                </div>
+                <div style="display: flex; margin-bottom: 14px;">
+                  <span style="flex: 0 0 220px; font-weight: bold; color: #333333;">Département</span>
+                  <span style="flex: 1; color: #111111; font-weight: 600;">: {{ templateData.department }}</span>
+                </div>
+                <div style="display: flex; margin-bottom: 14px;">
+                  <span style="flex: 0 0 220px; font-weight: bold; color: #333333;">Fonction / Poste</span>
+                  <span style="flex: 1; color: #111111; font-weight: 600;">: {{ templateData.jobPosition }}</span>
+                </div>
+                
+                <div style="display: flex; margin-bottom: 14px;" *ngIf="selectedTask.documentType === 'ATTESTATION_TRAVAIL'">
+                  <span style="flex: 0 0 220px; font-weight: bold; color: #333333;">Embauché(e) depuis le</span>
+                  <span style="flex: 1; color: #111111; font-weight: 600;">: {{ templateData.hireDate | date:'dd/MM/yyyy' }}</span>
+                </div>
+                <div style="display: flex; margin-bottom: 0;" *ngIf="selectedTask.documentType === 'FICHE_PAIE'">
+                  <span style="flex: 0 0 220px; font-weight: bold; color: #333333;">Salaire de base mensuel</span>
+                  <span style="flex: 1; color: #111111; font-weight: 600;">: {{ templateData.salary }} DT</span>
+                </div>
+              </div>
+
+              <p style="margin-top: 35px;" *ngIf="selectedTask.documentType === 'ATTESTATION_TRAVAIL'">
+                fait partie de nos effectifs en qualité de <strong>{{ templateData.jobPosition }}</strong> au sein du <strong>{{ templateData.department }}</strong>.
+              </p>
+              <p style="margin-top: 15px;" *ngIf="selectedTask.documentType === 'ATTESTATION_TRAVAIL'">
+                La présente attestation est délivrée à l'intéressé(e), sur sa demande, pour servir et valoir ce que de droit.
+              </p>
+              <p style="margin-top: 35px;" *ngIf="selectedTask.documentType === 'FICHE_PAIE'">
+                Ceci constitue une copie simplifiée de la fiche de paie, générée à la demande du collaborateur via la plateforme administrative de <strong>Tunisie Clearing</strong>.
+              </p>
+              <p style="margin-top: 35px;" *ngIf="selectedTask.documentType === 'SOLDE_TOUT_COMPTE'">
+                Le solde de tout compte est établi conformément à la législation en vigueur. Tous les éléments de rémunération et indemnités ont été calculés et versés.
+              </p>
+              <p style="margin-top: 35px;" *ngIf="selectedTask.documentType === 'AUTORISATION_CONGE'">
+                est autorisé(e) à prendre un congé conformément à la réglementation interne de l'entreprise.
+              </p>
+            </div>
+
+            <!-- FOOTER -->
+            <div style="margin-top: 80px; display: flex; justify-content: space-between; align-items: flex-end;">
+              <div style="font-size: 13px;">
+                <p style="margin: 0;">Fait à <strong>{{ templateData.location }}</strong>,</p>
+                <p style="margin: 5px 0 0 0;">Le <strong>{{ templateData.currentDate | date:'dd/MM/yyyy' }}</strong></p>
+              </div>
+              <div style="text-align: center;">
+                <p style="font-weight: bold; font-size: 13px; margin: 0;">Pour la Direction Générale</p>
+                <p style="font-weight: bold; font-size: 13px; margin: 5px 0 0 0;">Le Chef du Département</p>
+                <div style="margin-top: 60px; border-top: 1px dashed #999999; width: 220px; padding-top: 8px; font-size: 11px; color: #888888;">Signature et Cachet</div>
+              </div>
+            </div>
+
+            <!-- BOTTOM BAR -->
+            <div style="position: absolute; bottom: 20mm; left: 25mm; right: 25mm; border-top: 2px solid #1a1a2e; padding-top: 10px; display: flex; justify-content: center;">
+              <p style="margin: 0; font-size: 9px; color: #999999; font-family: 'Arial', sans-serif; text-align: center;">
+                Tunisie Clearing S.A. — Centre Urbain Nord, 1082 Tunis — Tél: +216 71 189 800 — www.tunisieclearing.com.tn
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

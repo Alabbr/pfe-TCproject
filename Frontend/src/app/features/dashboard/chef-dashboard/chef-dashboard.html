@@ -4,10 +4,53 @@
     <div class="banner-content">
       <p class="welcome-label">Espace Chef de Département</p>
       <h1>{{ currentUser?.fullName || 'Mon Espace' }}</h1>
-      <p class="welcome-dept">{{ currentUser?.departmentName }}</p>
+      <p class="welcome-dept">
+        <span class="material-symbols-outlined" style="font-size: 18px; opacity: 0.7;">location_city</span>
+        {{ currentUser?.departmentName }}
+      </p>
     </div>
     <div class="banner-decoration">
       <span class="material-symbols-outlined icon-large">corporate_fare</span>
+    </div>
+  </div>
+
+  <!-- KPI Quick Stats -->
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <div class="kpi-icon icon-team">
+        <span class="material-symbols-outlined">groups</span>
+      </div>
+      <div class="kpi-info">
+        <h4>{{ departmentUsers.length }}</h4>
+        <p>Collaborateurs</p>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon icon-pending">
+        <span class="material-symbols-outlined">person_alert</span>
+      </div>
+      <div class="kpi-info">
+        <h4>{{ pendingUsers.length }}</h4>
+        <p>En attente</p>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon icon-assigned">
+        <span class="material-symbols-outlined">how_to_reg</span>
+      </div>
+      <div class="kpi-info">
+        <h4>{{ departmentUsers.length - pendingUsers.length }}</h4>
+        <p>Affectés</p>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon icon-jobs">
+        <span class="material-symbols-outlined">work</span>
+      </div>
+      <div class="kpi-info">
+        <h4>{{ jobPositions.length }}</h4>
+        <p>Postes disponibles</p>
+      </div>
     </div>
   </div>
 
@@ -67,11 +110,108 @@
                <img *ngIf="user.profilePictureUrl" [src]="user.profilePictureUrl" alt="avatar">
                <span *ngIf="!user.profilePictureUrl">{{ user.firstName.charAt(0) }}{{ user.lastName.charAt(0) }}</span>
             </div>
-            <div class="member-details">
+            <div class="member-details" style="flex: 1;">
               <h4>{{ user.fullName }}</h4>
-              <span class="member-role" [class.role-chef]="user.role === 'DIRECTEUR'">{{ user.role.replace('_', ' ') }}</span>
+              <span class="member-role" [class.role-chef]="user.role === 'DIRECTEUR'">{{ user.role | roleFormat }}</span>
               <p class="member-job" *ngIf="user.jobPositionName"><span class="material-symbols-outlined">work</span> {{ user.jobPositionName }}</p>
               <p class="member-job missing" *ngIf="!user.jobPositionName"><span class="material-symbols-outlined">warning</span> En attente</p>
+            </div>
+            <div class="member-actions" *ngIf="user.role !== 'DIRECTEUR'">
+              <button class="btn btn-icon btn-primary-light" title="Changer de poste" (click)="openAssignModal(user)">
+                <span class="material-symbols-outlined">edit</span>
+              </button>
+              <button class="btn btn-icon btn-warning-light" title="Demander un transfert" (click)="openTransferModal(user)">
+                <span class="material-symbols-outlined">swap_horiz</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard-secondary-grid">
+      <!-- Interim Management Card -->
+      <div class="card interim-card mt-4">
+        <div class="card-header border-primary">
+          <div class="card-title">
+            <span class="material-symbols-outlined text-primary">event_available</span>
+            <div class="title-text">
+              <h2>Gestion des Congés & Intérim</h2>
+              <p class="subtitle">Déléguez vos accès temporairement</p>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-sm btn-icon-text" (click)="openInterimModal()">
+            <span class="material-symbols-outlined">add</span> Déléguer
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="pending-list" *ngIf="activeDelegations.length === 0">
+            <p class="pending-desc text-center mt-3">Aucun intérim en cours actuellement.</p>
+          </div>
+          <div class="pending-list" *ngIf="activeDelegations.length > 0">
+            <div class="pending-item" *ngFor="let del of activeDelegations" style="border-left-color: var(--color-primary);">
+              <div class="user-info">
+                <div class="avatar" style="background: linear-gradient(135deg, #8B5CF6, #6D28D9);">
+                  {{ del.interim.firstName.charAt(0) }}{{ del.interim.lastName.charAt(0) }}
+                </div>
+                <div>
+                  <h4>{{ del.interim.firstName }} {{ del.interim.lastName }}</h4>
+                  <p><span class="material-symbols-outlined" style="font-size: 14px; vertical-align: middle;">event</span> Jusqu'au {{ del.endDate | date:'dd/MM/yyyy' }}</p>
+                </div>
+              </div>
+              <button class="btn btn-danger-light btn-icon" (click)="revokeDelegation(del.id)" title="Révoquer">
+                <span class="material-symbols-outlined">cancel</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Document Requests Card -->
+      <div class="card request-card mt-4">
+        <div class="card-header border-warning">
+          <div class="card-title">
+            <span class="material-symbols-outlined text-warning">description</span>
+            <div class="title-text">
+              <h2>Demandes de Documents</h2>
+              <p class="subtitle">Assignation et traitement</p>
+            </div>
+          </div>
+          <span class="badge badge-warning round-badge">{{ documentRequests.length }}</span>
+        </div>
+        <div class="card-body">
+          <div class="pending-list" *ngIf="documentRequests.length === 0">
+            <p class="pending-desc text-center mt-3">Aucune demande de document en attente.</p>
+          </div>
+          <div class="pending-list" *ngIf="documentRequests.length > 0">
+            <div class="pending-item" *ngFor="let req of documentRequests" style="border-left-color: #F59E0B; flex-direction: column; align-items: stretch; gap: 1rem;">
+              
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div class="user-info">
+                  <div class="avatar" style="background: linear-gradient(135deg, #F59E0B, #D97706);">
+                    {{ req.requester.firstName.charAt(0) }}{{ req.requester.lastName.charAt(0) }}
+                  </div>
+                  <div>
+                    <h4>{{ req.requester.firstName }} {{ req.requester.lastName }}</h4>
+                    <p style="margin-bottom: 4px;">{{ req.description }}</p>
+                    <div style="display: flex; gap: 0.5rem; align-items: center; margin-top: 5px;">
+                      <span class="badge badge-info-light" *ngIf="req.documentType">{{ req.documentType.replace('_', ' ') }}</span>
+                      <span class="badge badge-warning" *ngIf="req.status === 'PENDING'">En attente</span>
+                      <span class="badge btn-primary-light" *ngIf="req.status === 'ASSIGNED'">Affecté</span>
+                      <span class="badge btn-primary-light" *ngIf="req.status === 'DELEGATED'">Délégué</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="request-actions" *ngIf="req.status === 'PENDING'">
+                  <button class="btn btn-icon-text btn-success-light" (click)="takeChargeRequest(req.id)">
+                    <span class="material-symbols-outlined">check_circle</span> Prendre en charge
+                  </button>
+                  <button class="btn btn-icon-text btn-primary-light" (click)="openDelegateDocModal(req)">
+                    <span class="material-symbols-outlined">assignment_ind</span> Déléguer
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -111,6 +251,127 @@
       <button class="btn btn-primary" (click)="assignJobPosition()" [disabled]="!selectedJobPositionId || isAssigning">
         <span *ngIf="!isAssigning">Confirmer l'affectation</span>
         <span *ngIf="isAssigning" class="material-symbols-outlined spin">refresh</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Interim Modal -->
+<div class="modal-backdrop" *ngIf="isInterimModalOpen" (click)="closeInterimModal()">
+  <div class="modal-content glass-effect" (click)="$event.stopPropagation()">
+    <button class="close-btn" (click)="closeInterimModal()">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+    
+    <div class="modal-header">
+      <h2>Délégation d'Intérim</h2>
+      <p>Désignez un membre de votre équipe pour vous remplacer pendant vos congés.</p>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-group mb-3">
+        <label>Intérimaire</label>
+        <select class="form-control" [(ngModel)]="interimForm.userId">
+          <option value="">-- Sélectionnez un collaborateur --</option>
+          <option *ngFor="let user of departmentUsers" [value]="user.id">{{ user.fullName }} - {{ user.jobPositionName || (user.role | roleFormat) }}</option>
+        </select>
+      </div>
+      
+      <div class="form-row" style="display: flex; gap: 1rem;">
+        <div class="form-group" style="flex: 1;">
+          <label>Date de début</label>
+          <input type="date" class="form-control" [(ngModel)]="interimForm.startDate">
+        </div>
+        <div class="form-group" style="flex: 1;">
+          <label>Date de fin</label>
+          <input type="date" class="form-control" [(ngModel)]="interimForm.endDate">
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer mt-4">
+      <button class="btn btn-secondary" (click)="closeInterimModal()">Annuler</button>
+      <button class="btn btn-primary" (click)="submitInterim()" [disabled]="!interimForm.userId || !interimForm.startDate || !interimForm.endDate || isSubmittingInterim">
+        <span *ngIf="!isSubmittingInterim">Valider l'intérim</span>
+        <span *ngIf="isSubmittingInterim" class="material-symbols-outlined spin">refresh</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Delegate Document Modal -->
+<div class="modal-backdrop" *ngIf="showDelegateDocModal" (click)="closeDelegateDocModal()">
+  <div class="modal-content glass-effect" (click)="$event.stopPropagation()">
+    <button class="close-btn" (click)="closeDelegateDocModal()">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+    <div class="modal-header">
+      <h2>Déléguer la demande</h2>
+      <p *ngIf="selectedDocRequest?.documentType">Type : <strong>{{ selectedDocRequest?.documentType?.replace('_', ' ') }}</strong></p>
+    </div>
+    <div class="modal-body">
+      <p class="info-text">Choisissez un membre de votre département à qui déléguer la génération de ce document.</p>
+      
+      <div class="form-group mt-3">
+        <label>Déléguer à :</label>
+        <select class="form-control" [(ngModel)]="selectedDelegateeId">
+          <option [value]="null">-- Sélectionner un employé --</option>
+          <option *ngFor="let member of departmentUsers" [value]="member.id">
+            {{ member.fullName }} ({{ member.jobPositionName || member.role }})
+          </option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer mt-4">
+      <button class="btn btn-secondary" (click)="closeDelegateDocModal()">Annuler</button>
+      <button class="btn btn-primary" (click)="delegateDocRequest()" [disabled]="!selectedDelegateeId || isDelegatingDoc">
+        <span class="spinner-small" *ngIf="isDelegatingDoc"></span>
+        <span *ngIf="!isDelegatingDoc">Déléguer la tâche</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Transfer Request Modal -->
+<div class="modal-backdrop" *ngIf="isTransferModalOpen" (click)="closeTransferModal()">
+  <div class="modal-content glass-effect" (click)="$event.stopPropagation()">
+    <button class="close-btn" (click)="closeTransferModal()">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+    
+    <div class="modal-header">
+      <h2>Demande de Transfert</h2>
+      <p>Initier un transfert pour <strong>{{ selectedUserForTransfer?.fullName }}</strong> vers un autre département.</p>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-group mb-3">
+        <label>Département cible</label>
+        <select class="form-control" [(ngModel)]="transferForm.targetDepartmentId" (change)="onTargetDepartmentChange()">
+          <option value="">-- Sélectionnez un département --</option>
+          <option *ngFor="let dept of allDepartments" [value]="dept.id">{{ dept.name }}</option>
+        </select>
+      </div>
+
+      <div class="form-group mb-3" *ngIf="targetDepartmentJobs.length > 0">
+        <label>Poste proposé (Optionnel)</label>
+        <select class="form-control" [(ngModel)]="transferForm.newJobPositionId">
+          <option value="">-- Ne pas spécifier --</option>
+          <option *ngFor="let pos of targetDepartmentJobs" [value]="pos.id">{{ pos.name }}</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Motif de la demande</label>
+        <textarea class="form-control" [(ngModel)]="transferForm.comment" rows="3" placeholder="Expliquez pourquoi vous souhaitez transférer cet employé..."></textarea>
+      </div>
+    </div>
+
+    <div class="modal-footer mt-4">
+      <button class="btn btn-secondary" (click)="closeTransferModal()">Annuler</button>
+      <button class="btn btn-primary" (click)="submitTransferRequest()" [disabled]="!transferForm.targetDepartmentId || !transferForm.comment || isSubmittingTransfer">
+        <span *ngIf="!isSubmittingTransfer">Envoyer la demande</span>
+        <span *ngIf="isSubmittingTransfer" class="material-symbols-outlined spin">refresh</span>
       </button>
     </div>
   </div>

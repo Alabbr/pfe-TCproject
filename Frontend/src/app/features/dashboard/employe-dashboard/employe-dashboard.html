@@ -2,12 +2,49 @@
   <!-- Banner -->
   <div class="welcome-banner">
     <div class="banner-content">
-      <p class="welcome-label">Bienvenue sur votre espace</p>
+      <p class="welcome-label">{{ greeting }},</p>
       <h1>{{ currentUser?.fullName || 'Mon Espace' }}</h1>
       <p class="welcome-date">{{ currentDate | date:'EEEE d MMMM yyyy' : '' : 'fr' }}</p>
     </div>
-    <div class="banner-decoration">
-      <span class="material-symbols-outlined icon-large">workspace_premium</span>
+    <div class="banner-avatar">
+      <div class="avatar-circle">
+        <img *ngIf="currentUser?.profilePictureUrl" [src]="currentUser!.profilePictureUrl" alt="avatar">
+        <span *ngIf="!currentUser?.profilePictureUrl">{{ getInitials() }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Stats (Documents) -->
+  <div class="quick-stats" *ngIf="docStats">
+    <div class="stat-pill" (click)="navigateTo('/documents')">
+      <div class="stat-icon inbox"><span class="material-symbols-outlined">inbox</span></div>
+      <div class="stat-data">
+        <span class="stat-number">{{ docStats.totalReceived }}</span>
+        <span class="stat-label">Docs reçus</span>
+      </div>
+    </div>
+    <div class="stat-pill" (click)="navigateTo('/documents')">
+      <div class="stat-icon sent"><span class="material-symbols-outlined">send</span></div>
+      <div class="stat-data">
+        <span class="stat-number">{{ docStats.totalSent }}</span>
+        <span class="stat-label">Docs envoyés</span>
+      </div>
+    </div>
+    <div class="stat-pill" (click)="navigateTo('/documents')">
+      <div class="stat-icon unread" [class.has-unread]="docStats.unreadCount > 0">
+        <span class="material-symbols-outlined">mark_email_unread</span>
+      </div>
+      <div class="stat-data">
+        <span class="stat-number">{{ docStats.unreadCount }}</span>
+        <span class="stat-label">Non lus</span>
+      </div>
+    </div>
+    <div class="stat-pill" (click)="navigateTo('/documents')">
+      <div class="stat-icon public"><span class="material-symbols-outlined">public</span></div>
+      <div class="stat-data">
+        <span class="stat-number">{{ docStats.publicDocsCount }}</span>
+        <span class="stat-label">Bibliothèque</span>
+      </div>
     </div>
   </div>
 
@@ -17,20 +54,36 @@
       <div class="card-header border-gold">
         <div class="card-title">
           <span class="material-symbols-outlined text-gold">badge</span>
-          <h2>Mes Informations</h2>
+          <h2>Mon Profil</h2>
         </div>
       </div>
       <div class="card-body">
         <div class="info-row">
-          <span class="label">Département</span>
+          <div class="info-left">
+            <span class="material-symbols-outlined">location_city</span>
+            <span class="label">Département</span>
+          </div>
           <span class="value">{{ currentUser?.departmentName || 'Non affecté' }}</span>
         </div>
         <div class="info-row">
-          <span class="label">Rôle Système</span>
+          <div class="info-left">
+            <span class="material-symbols-outlined">shield_person</span>
+            <span class="label">Rôle Système</span>
+          </div>
           <span class="value">{{ currentUser?.role?.replace('_', ' ') }}</span>
         </div>
         <div class="info-row">
-          <span class="label">Statut</span>
+          <div class="info-left">
+            <span class="material-symbols-outlined">email</span>
+            <span class="label">Email</span>
+          </div>
+          <span class="value email-val">{{ currentUser?.email }}</span>
+        </div>
+        <div class="info-row">
+          <div class="info-left">
+            <span class="material-symbols-outlined">check_circle</span>
+            <span class="label">Statut</span>
+          </div>
           <span class="status-badge"><span class="material-symbols-outlined">check_circle</span> Actif</span>
         </div>
       </div>
@@ -46,17 +99,33 @@
       </div>
       <div class="card-body p-0">
         <div class="shortcuts-grid">
-          <button class="shortcut-btn">
-            <span class="material-symbols-outlined">folder_shared</span>
-            Documents
+          <button class="shortcut-btn" (click)="navigateTo('/documents')">
+            <div class="shortcut-icon docs">
+              <span class="material-symbols-outlined">folder_shared</span>
+            </div>
+            <span class="shortcut-label">Documents</span>
+            <span class="shortcut-desc">Envoyer & recevoir</span>
           </button>
-          <button class="shortcut-btn">
-            <span class="material-symbols-outlined">event_note</span>
-            Congés
+          <button class="shortcut-btn" (click)="navigateTo('/chat')">
+            <div class="shortcut-icon chat">
+              <span class="material-symbols-outlined">chat</span>
+            </div>
+            <span class="shortcut-label">Chat</span>
+            <span class="shortcut-desc">Inter-équipes</span>
           </button>
-          <button class="shortcut-btn">
-            <span class="material-symbols-outlined">support_agent</span>
-            Support IT
+          <button class="shortcut-btn" (click)="navigateTo('/rag')">
+            <div class="shortcut-icon ai">
+              <span class="material-symbols-outlined">smart_toy</span>
+            </div>
+            <span class="shortcut-label">Chatbot IA</span>
+            <span class="shortcut-desc">Assistant intelligent</span>
+          </button>
+          <button class="shortcut-btn" (click)="navigateTo('/departments')">
+            <div class="shortcut-icon dept">
+              <span class="material-symbols-outlined">corporate_fare</span>
+            </div>
+            <span class="shortcut-label">Structure</span>
+            <span class="shortcut-desc">Départements</span>
           </button>
         </div>
       </div>

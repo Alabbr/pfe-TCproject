@@ -23,6 +23,7 @@ public class UserPresenceService {
     // A user can have multiple tabs open, so we count sessions.
     private final Map<String, Integer> onlineUsers = new ConcurrentHashMap<>();
 
+    // Détecté automatiquement quand un utilisateur se connecte via WebSocket, incrémente le compteur de sessions
     @EventListener
     public void handleSessionConnected(SessionConnectEvent event) {
         StompHeaderAccessor headers = StompHeaderAccessor.wrap(event.getMessage());
@@ -38,6 +39,7 @@ public class UserPresenceService {
         }
     }
 
+    // Détecté automatiquement quand un utilisateur se déconnecte, décrémente le compteur et broadcast si dernière session
     @EventListener
     public void handleSessionDisconnect(SessionDisconnectEvent event) {
         StompHeaderAccessor headers = StompHeaderAccessor.wrap(event.getMessage());
@@ -53,10 +55,12 @@ public class UserPresenceService {
         }
     }
 
+    // Retourne l'ensemble des emails des utilisateurs actuellement en ligne
     public Set<String> getOnlineUsers() {
         return onlineUsers.keySet();
     }
 
+    // Envoie une notification de présence (en ligne/hors ligne) à tous les clients via WebSocket
     private void broadcastPresence(String username, boolean isOnline) {
         messagingTemplate.convertAndSend("/topic/presence", (Object) Map.of(
             "email", username,

@@ -1,0 +1,538 @@
+// ============================================================
+// TC HUB — Roles Management · Premium Design
+// Palette: #0D2B5E (navy) / #1A4A8A (steel) / #C9A84C (gold)
+// ============================================================
+
+$navy:        #0D2B5E;
+$navy-dark:   #091D42;
+$steel:       #1A4A8A;
+$gold:        #C9A84C;
+$gold-light:  #E8C96A;
+
+$bg-main:     var(--color-bg-surface);
+$bg-card:     var(--color-bg-white);
+$text-main:   var(--color-text-main);
+$text-muted:  var(--color-text-muted);
+$border:      var(--color-border);
+
+$radius-xl:   20px;
+$radius-lg:   14px;
+$radius-md:   10px;
+$radius-sm:   6px;
+
+$ease:        cubic-bezier(0.4, 0, 0.2, 1);
+$transition:  all 0.28s $ease;
+
+$shadow-sm:   0 2px 8px rgba(13, 43, 94, 0.06);
+$shadow-md:   0 6px 24px rgba(13, 43, 94, 0.10);
+$shadow-lg:   0 16px 48px rgba(13, 43, 94, 0.14);
+
+:host {
+  display: block;
+  min-height: calc(100vh - 70px);
+  background: $bg-main;
+  padding: 2rem 2.5rem 4rem;
+  font-family: 'Inter', sans-serif;
+}
+
+// ── Page Header ───────────────────────────────────────────────
+.usr-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+
+  .usr-header-left {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+  }
+
+  .usr-header-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: $radius-lg;
+    background: linear-gradient(145deg, $navy, $steel);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 20px rgba(13, 43, 94, 0.30);
+    flex-shrink: 0;
+
+    span { font-size: 30px; color: $gold; }
+  }
+
+  .usr-page-title {
+    margin: 0 0 0.2rem;
+    font-size: 1.85rem;
+    font-weight: 800;
+    color: $navy;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+  }
+
+  .usr-page-subtitle {
+    margin: 0;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: $text-muted;
+    letter-spacing: 0.01em;
+  }
+}
+
+// ── Master-Detail Layout ────────────────────────────────────────
+.master-detail-layout {
+  display: grid;
+  grid-template-columns: 280px 340px 1fr;
+  gap: 1.5rem;
+  height: calc(100vh - 220px);
+  min-height: 500px;
+}
+
+.pane {
+  background: $bg-card;
+  border-radius: $radius-xl;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: $shadow-sm;
+  border: 1px solid $border;
+
+  .pane-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: $navy;
+    margin: 0;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid $border;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(13, 43, 94, 0.02);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+
+    span.material-symbols-outlined {
+      color: $gold;
+      font-size: 20px;
+    }
+  }
+
+  .pane-content {
+    flex: 1;
+    padding: 1.5rem;
+    overflow-y: auto;
+
+    &.p-0 { padding: 0; }
+
+    &::-webkit-scrollbar { width: 6px; }
+    &::-webkit-scrollbar-thumb {
+      background: rgba(13, 43, 94, 0.2);
+      border-radius: 3px;
+    }
+  }
+}
+
+/* --- Shared UI Elements --- */
+.info-text {
+  font-size: 0.88rem;
+  color: $text-muted;
+  margin-bottom: 1rem;
+}
+
+.empty-state-small, .empty-state-large {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: $text-muted;
+  text-align: center;
+  height: 100%;
+
+  span.material-symbols-outlined {
+    font-size: 32px;
+    margin-bottom: 0.75rem;
+    opacity: 0.5;
+    color: $navy;
+  }
+}
+
+.empty-state-large {
+  min-height: 350px;
+  span.material-symbols-outlined { font-size: 48px; }
+}
+
+/* --- Column 1: Departments --- */
+.list-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  .list-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: $radius-md;
+    cursor: pointer;
+    text-align: left;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: $text-main;
+    transition: $transition;
+
+    .item-icon {
+      color: $text-muted;
+      display: flex;
+      align-items: center;
+    }
+
+    &:hover {
+      background: rgba(13, 43, 94, 0.03);
+    }
+
+    &.active {
+      background: rgba(13, 43, 94, 0.06);
+      border-color: rgba(13, 43, 94, 0.1);
+      color: $navy;
+
+      .item-icon { color: $navy; }
+    }
+  }
+}
+
+.static-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(13, 43, 94, 0.06);
+  border: 1px solid rgba(13, 43, 94, 0.1);
+  border-radius: $radius-md;
+  color: $navy;
+  font-weight: 600;
+  
+  .item-icon { display: flex; align-items: center; }
+}
+
+/* --- Column 2: Users --- */
+.users-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  .user-card {
+    display: flex;
+    align-items: center;
+    padding: 0.85rem 1rem;
+    background: $bg-card;
+    border: 1px solid $border;
+    border-radius: $radius-md;
+    cursor: pointer;
+    transition: $transition;
+
+    &:hover {
+      border-color: rgba(201, 168, 76, 0.5);
+      box-shadow: $shadow-sm;
+      transform: translateY(-2px);
+    }
+
+    &.selected {
+      border-color: $gold;
+      background: rgba(201, 168, 76, 0.05);
+      box-shadow: 0 0 0 1px $gold;
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, $navy, $steel);
+      color: $gold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 0.75rem;
+      overflow: hidden;
+
+      img { width: 100%; height: 100%; object-fit: cover; }
+      span { font-size: 20px; }
+    }
+
+    .user-info {
+      flex: 1;
+      overflow: hidden;
+
+      .user-name {
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: $navy;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      
+      .user-job {
+        font-size: 0.75rem;
+        color: $text-muted;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+
+    .user-badge {
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 0.25rem 0.5rem;
+      border-radius: 20px;
+      background: rgba(13, 43, 94, 0.08);
+      color: $navy;
+      margin-left: 0.5rem;
+    }
+  }
+}
+
+/* --- Column 3: Configuration --- */
+.config-wrapper {
+  padding: 2rem;
+
+  .profile-header {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+
+    .profile-avatar-large {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, $navy, $steel);
+      color: $gold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      box-shadow: $shadow-sm;
+
+      span { font-size: 32px; }
+      img { width: 100%; height: 100%; object-fit: cover; }
+    }
+
+    .profile-details {
+      h4 {
+        margin: 0 0 0.25rem 0;
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: $navy;
+      }
+      .email {
+        color: $text-muted;
+        font-size: 0.85rem;
+        margin: 0 0 0.25rem 0;
+      }
+      .job {
+        color: $steel;
+        font-weight: 600;
+        font-size: 0.8rem;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        
+        span { font-size: 14px; }
+      }
+    }
+  }
+
+  .section-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: $text-muted;
+    margin-bottom: 0.75rem;
+    display: block;
+  }
+
+  .section-header-flex {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+
+  .help-text {
+    color: $text-muted;
+    font-size: 0.8rem;
+    display: block;
+  }
+
+  .role-update-section {
+    background: rgba(13, 43, 94, 0.03);
+    border: 1px solid $border;
+    border-radius: $radius-lg;
+    padding: 1.25rem;
+    margin-bottom: 2rem;
+
+    .role-select-wrapper {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
+
+      .premium-select {
+        flex: 1;
+        height: 42px;
+        border-radius: $radius-sm;
+        border: 1px solid $border;
+        background-color: $bg-card;
+        font-weight: 600;
+        color: $navy;
+      }
+
+      .btn-primary {
+        height: 42px;
+        padding: 0 1.25rem;
+        display: flex;
+        align-items: center;
+        background: linear-gradient(135deg, $navy 0%, $steel 100%);
+        color: white;
+        border: none;
+        border-radius: $radius-sm;
+        font-weight: 700;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: $transition;
+
+        &:hover {
+          box-shadow: $shadow-md;
+          transform: translateY(-1px);
+        }
+        
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          transform: none;
+          box-shadow: none;
+        }
+      }
+    }
+  }
+
+  .permissions-section {
+    .permissions-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+
+      .permission-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.85rem 1rem;
+        background: $bg-card;
+        border: 1px solid $border;
+        border-radius: $radius-md;
+        transition: $transition;
+
+        &:hover:not(.readonly) {
+          border-color: $steel;
+        }
+
+        &.readonly {
+          opacity: 0.7;
+          background: rgba(13, 43, 94, 0.02);
+        }
+
+        .perm-name {
+          font-size: 0.85rem;
+          font-weight: 600;
+          color: $navy;
+          text-transform: capitalize;
+        }
+      }
+    }
+    
+    .permissions-actions {
+      .btn-secondary-outline {
+        height: 42px;
+        padding: 0 1.25rem;
+        background: transparent;
+        border: 2px solid $navy;
+        color: $navy;
+        border-radius: $radius-sm;
+        font-weight: 700;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: $transition;
+        display: flex;
+        align-items: center;
+
+        &:hover:not(:disabled) {
+          background: rgba(13, 43, 94, 0.05);
+        }
+      }
+    }
+  }
+}
+
+/* --- Toggle Switch CSS --- */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+  margin: 0;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #cbd5e1;
+  transition: .3s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .3s;
+}
+
+input:checked + .slider {
+  background-color: $steel;
+}
+
+input:disabled + .slider {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+input:checked + .slider:before {
+  transform: translateX(18px);
+}
+
+.slider.round {
+  border-radius: 22px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}

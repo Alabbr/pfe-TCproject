@@ -12,6 +12,7 @@ export class ThemeService {
     this.initTheme();
   }
 
+  // Initialise le thème (sombre/clair) selon le stockage local ou les préférences du système
   private initTheme() {
     const savedTheme = localStorage.getItem('theme');
     const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -23,11 +24,13 @@ export class ThemeService {
     }
   }
 
+  // Bascule entre le mode sombre et le mode clair
   toggleTheme() {
     const newTheme = !this.isDarkModeSubject.value;
     this.setDarkMode(newTheme);
   }
 
+  // Applique le thème sélectionné et l'enregistre
   private setDarkMode(isDark: boolean) {
     this.isDarkModeSubject.next(isDark);
     if (isDark) {

@@ -13,15 +13,31 @@
 
   <div class="sidebar-content">
     <div class="nav-group" *ngFor="let group of navGroups">
-      <div class="group-title">{{ group.name }}</div>
-      <nav class="nav-items">
-        <a *ngFor="let item of group.items" 
-           [routerLink]="item.route" 
-           routerLinkActive="active" 
-           class="nav-link">
-          <span class="material-symbols-outlined nav-icon">{{ item.icon }}</span>
-          <span class="nav-label">{{ item.label }}</span>
-        </a>
+      <!-- Accordion header for Documents group -->
+      <div class="group-title" 
+           *ngIf="!group.isAccordion">{{ group.name }}</div>
+      
+      <div class="group-title accordion-header" 
+           *ngIf="group.isAccordion" 
+           (click)="toggleDocsAccordion()">
+        <span>{{ group.name }}</span>
+        <span class="material-symbols-outlined accordion-arrow" 
+              [class.expanded]="isDocsExpanded">expand_more</span>
+      </div>
+
+      <nav class="nav-items" [class.accordion-collapsed]="group.isAccordion && !isDocsExpanded">
+        <ng-container *ngFor="let item of group.items">
+          <!-- Always show the main "Espace Documents" link -->
+          <a *ngIf="!item.isSubItem || (group.isAccordion && isDocsExpanded) || !group.isAccordion"
+             [routerLink]="item.route" 
+             routerLinkActive="active" 
+             class="nav-link"
+             [class.sub-item]="item.isSubItem">
+            <span class="material-symbols-outlined nav-icon">{{ item.icon }}</span>
+            <span class="nav-label">{{ item.label }}</span>
+            <span class="nav-badge" *ngIf="item.badge && item.badge > 0">{{ item.badge }}</span>
+          </a>
+        </ng-container>
       </nav>
     </div>
   </div>
@@ -34,7 +50,7 @@
       </div>
       <div class="user-details">
         <div class="user-name">{{ currentUser.fullName || 'Utilisateur' }}</div>
-        <div class="user-role">{{ currentUser.role === 'SUPER_ADMIN' ? 'Directeur Général' : (currentUser.role === 'DIRECTEUR' ? 'Chef de Département' : 'Employé') }}</div>
+        <div class="user-role">{{ currentUser.role | roleFormat }}</div>
       </div>
     </div>
   </div>

@@ -49,16 +49,21 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 if (StompCommand.CONNECT.equals(accessor.getCommand())) {
                     String authHeader = accessor.getFirstNativeHeader("Authorization");
                     if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                        String token = authHeader.substring(7);
-                        String username = jwtTokenProvider.extractUsername(token);
-                        if (username != null) {
-                            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                            if (jwtTokenProvider.isTokenValid(token, userDetails)) {
-                                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                                        userDetails, null, userDetails.getAuthorities()
-                                );
-                                accessor.setUser(auth);
+                        try {
+                            String token = authHeader.substring(7);
+                            String username = jwtTokenProvider.extractUsername(token);
+                            if (username != null) {
+                                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                                if (jwtTokenProvider.isTokenValid(token, userDetails)) {
+                                    UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                                            userDetails, null, userDetails.getAuthorities()
+                                    );
+                                    accessor.setUser(auth);
+                                }
                             }
+                        } catch (Exception e) {
+                            System.out.println("WebSocket JWT Error: " + e.getMessage());
+                            // Do not throw an exception, just let the connection remain unauthenticated.
                         }
                     }
                 }

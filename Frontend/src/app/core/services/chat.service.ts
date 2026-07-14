@@ -89,6 +89,7 @@ export class ChatService {
     }
   }
 
+  // Connecte le client WebSocket (avec le token d'authentification)
   connect() {
     // Update token before connecting
     this.client.connectHeaders = {
@@ -98,26 +99,31 @@ export class ChatService {
     this.fetchOnlineUsers();
   }
 
+  // Déconnecte le client WebSocket
   disconnect() {
     this.client.deactivate();
   }
 
   // ---- REST API for History & Upload ----
 
+  // Récupère l'historique des messages pour un canal spécifique via API REST
   getChannelMessages(channelId: string): Observable<ChatMessageDto[]> {
     return this.http.get<ChatMessageDto[]>(`${this.backendUrl}/api/chat/channel/${channelId}`);
   }
 
+  // Récupère l'historique des messages privés entre deux utilisateurs via API REST
   getDirectMessages(userId1: number, userId2: number): Observable<ChatMessageDto[]> {
     return this.http.get<ChatMessageDto[]>(`${this.backendUrl}/api/chat/direct/${userId1}/${userId2}`);
   }
 
+  // Récupère la liste des utilisateurs en ligne via API REST
   fetchOnlineUsers() {
     this.http.get<string[]>(`${this.backendUrl}/api/chat/presence`).subscribe(users => {
       this.presenceSubject.next(new Set(users));
     });
   }
 
+  // Upload un fichier joint pour le chat via API REST
   uploadAttachment(file: File): Observable<{url: string, name: string, type: string}> {
     const formData = new FormData();
     formData.append('file', file);
@@ -126,6 +132,7 @@ export class ChatService {
 
   // ---- WebSockets Publish / Subscribe ----
 
+  // S'abonne aux messages d'un canal spécifique
   subscribeToChannel(channelId: string) {
     if (this.subscriptions.has(channelId)) return; // Already subscribed
 
@@ -147,6 +154,7 @@ export class ChatService {
     this.subscriptions.set(channelId, sub);
   }
 
+  // Se désabonne d'un canal spécifique
   unsubscribeFromChannel(channelId: string) {
     const sub = this.subscriptions.get(channelId);
     if (sub) {
@@ -155,6 +163,7 @@ export class ChatService {
     }
   }
 
+  // S'abonne aux messages privés de l'utilisateur connecté
   private subscribeToPrivateMessages() {
     // Spring UserDestinationPrefix maps to /user/queue/messages
     const sub = this.client.subscribe(`/user/queue/messages`, (message: Message) => {
@@ -175,6 +184,7 @@ export class ChatService {
     this.subscriptions.set('private', sub);
   }
 
+  // S'abonne aux mises à jour de présence (en ligne/hors ligne) des utilisateurs
   private subscribeToPresence() {
     const sub = this.client.subscribe(`/topic/presence`, (message: Message) => {
       const data = JSON.parse(message.body); // { email: string, isOnline: boolean }
@@ -191,6 +201,7 @@ export class ChatService {
     this.subscriptions.set('presence', sub);
   }
 
+  // Envoie un nouveau message via WebSocket
   sendMessage(msg: ChatMessageDto) {
     this.client.publish({
       destination: `/app/chat.sendMessage`,
@@ -198,6 +209,7 @@ export class ChatService {
     });
   }
 
+  // Envoie une modification de message existant via WebSocket
   editMessage(messageId: number, content: string) {
     this.client.publish({
       destination: `/app/chat.editMessage`,
@@ -205,6 +217,7 @@ export class ChatService {
     });
   }
 
+  // Marque les messages d'un expéditeur comme lus via WebSocket
   markAsRead(senderId: number) {
     this.client.publish({
       destination: `/app/chat.markAsRead`,
@@ -215,6 +228,7 @@ export class ChatService {
     this.unreadMessagesSubject.next(unread);
   }
 
+  // Ajoute ou modifie une réaction sur un message via WebSocket
   reactToMessage(messageId: number, emoji: string) {
     this.client.publish({
       destination: `/app/chat.react`,
@@ -222,6 +236,7 @@ export class ChatService {
     });
   }
 
+  // Transfère un message existant vers un autre destinataire ou canal
   forwardMessage(originalMsg: ChatMessageDto, receiverId?: number, channelId?: string) {
     const forwarded: ChatMessageDto = {
       content: originalMsg.content,
@@ -235,6 +250,7 @@ export class ChatService {
     this.sendMessage(forwarded);
   }
 
+  // S'abonne aux accusés de lecture (read receipts)
   private subscribeToReadReceipts() {
     const sub = this.client.subscribe(`/user/queue/read-receipts`, (message: Message) => {
       const data = JSON.parse(message.body);
@@ -245,6 +261,7 @@ export class ChatService {
     this.subscriptions.set('read-receipts', sub);
   }
 
+  // Ajoute un message non lu à la liste (pour les notifications)
   private addUnreadMessage(msg: ChatMessageDto) {
     // Only add if not already in the list
     const current = this.unreadMessagesSubject.value;
@@ -253,10 +270,12 @@ export class ChatService {
     }
   }
 
+  // Joue le son de notification pour un nouveau message
   private playNotificationSound() {
     this.notificationSound.play().catch(e => console.log('Audio play blocked by browser', e));
   }
 
+  // Efface les notifications de messages non lus pour un canal spécifique
   clearUnreadForChannel(channelId: string) {
     const unread = this.unreadMessagesSubject.value.filter(m => m.channelId !== channelId);
     this.unreadMessagesSubject.next(unread);

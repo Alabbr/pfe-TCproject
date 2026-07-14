@@ -11,9 +11,9 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
-      // Si on reçoit 401 (Non autorisé) ou 403 (Interdit), on déconnecte l'utilisateur
-      // car son token est expiré ou son compte a été supprimé (ex: redémarrage backend)
-      if (error.status === 401 || error.status === 403) {
+      // Only logout on 401 (token expired/invalid). 
+      // 403 means the user is authenticated but lacks permission — don't disconnect them.
+      if (error.status === 401) {
         authService.logout();
         router.navigate(['/login']);
       }

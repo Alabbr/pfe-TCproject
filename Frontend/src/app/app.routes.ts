@@ -7,6 +7,7 @@ import { DepartmentsListComponent } from './features/departments/departments-lis
 import { TeamChat } from './features/chat/team-chat/team-chat';
 
 import { authGuard } from './core/guards/auth.guard';
+import { permissionGuard } from './core/guards/permission.guard';
 
 export const routes: Routes = [
   { path: 'login', component: Login },
@@ -18,7 +19,52 @@ export const routes: Routes = [
       { path: 'dashboard', component: Home },
       { path: 'users', component: UsersList },
       { path: 'departments', component: DepartmentsListComponent },
-      { path: 'chat', component: TeamChat },
+      { 
+        path: 'chat', 
+        component: TeamChat,
+        canActivate: [permissionGuard],
+        data: { permissions: ['VIEW_CHAT'] }
+      },
+      { 
+        path: 'documents', 
+        canActivate: [permissionGuard],
+        data: { permissions: ['VIEW_DOCUMENTS', 'MANAGE_DOCUMENTS'] },
+        loadComponent: () => import('./features/documents/documents-dashboard/documents-dashboard').then(m => m.DocumentsDashboardComponent)
+      },
+      {
+        path: 'department-docs/:id',
+        canActivate: [permissionGuard],
+        data: { permissions: ['VIEW_DOCUMENTS', 'MANAGE_DOCUMENTS'] },
+        loadComponent: () => import('./features/documents/department-docs/department-docs').then(m => m.DepartmentDocs)
+      },
+      {
+        path: 'my-tasks',
+        loadComponent: () => import('./features/tasks/employee-tasks/employee-tasks').then(m => m.EmployeeTasksComponent)
+      },
+      {
+        path: 'roles',
+        loadComponent: () => import('./features/roles-management/roles-management').then(m => m.RolesManagementComponent)
+      },
+      {
+        path: 'knowledge-base',
+        loadComponent: () => import('./features/rag/knowledge-base/knowledge-base').then(m => m.KnowledgeBaseComponent)
+      },
+      {
+        path: 'rag',
+        loadComponent: () => import('./features/rag/rag-chat/rag-chat').then(m => m.RagChatComponent)
+      },
+      {
+        path: 'projects',
+        loadComponent: () => import('./features/projects/projects-list/projects-list.component').then(m => m.ProjectsListComponent)
+      },
+      {
+        path: 'projects/:id',
+        loadComponent: () => import('./features/projects/project-detail/project-detail.component').then(m => m.ProjectDetailComponent)
+      },
+      {
+        path: 'project-tasks',
+        loadComponent: () => import('./features/projects/my-tasks/my-tasks.component').then(m => m.MyTasksComponent)
+      },
       // Other routes will be added here
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]

@@ -24,6 +24,7 @@ public class SettingController {
         this.cloudinaryService = cloudinaryService;
     }
 
+    // Récupère la valeur d'un paramètre global par sa clé (ex: LOGIN_BACKGROUND_URL)
     @GetMapping("/{key}")
     public ResponseEntity<?> getSetting(@PathVariable String key) {
         String value = appSettingService.getSettingValue(key);
@@ -31,8 +32,9 @@ public class SettingController {
         return ResponseEntity.ok(Map.of("key", key, "value", value != null ? value : ""));
     }
 
+    // Upload une nouvelle image d'arrière-plan pour la page de connexion via Cloudinary
     @PostMapping("/login-background")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('DIRECTEUR_GENERAL')")
     public ResponseEntity<?> uploadLoginBackground(@RequestParam("file") MultipartFile file) {
         try {
             String imageUrl = cloudinaryService.uploadImage(file);

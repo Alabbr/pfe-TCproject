@@ -16,6 +16,7 @@ export class AuthService {
 
   constructor(private http: HttpClient) {}
 
+  // Authentifie l'utilisateur avec ses identifiants et enregistre le token et les données utilisateur
   login(credentials: any): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.API_URL}/login`, credentials).pipe(
       tap(response => {
@@ -28,30 +29,63 @@ export class AuthService {
     );
   }
 
+  /**
+   * Fetch fresh user data from the backend without re-login.
+   * Called on page refresh to pick up any permission changes made by an admin.
+   */
+  refreshCurrentUser(): void {
+    if (!this.getToken()) return;
+
+    this.http.get<AuthResponse>(`${this.API_URL}/me`).subscribe({
+      next: (response) => {
+        if (response) {
+          // Keep the existing token, update everything else
+          const existingToken = this.getToken();
+          response.token = existingToken || response.token;
+          localStorage.setItem(this.USER_KEY, JSON.stringify(response));
+          this.currentUserSubject.next(response);
+        }
+      },
+      error: (err) => {
+        console.error('Failed to refresh user data', err);
+        // If 401, the token is invalid — logout
+        if (err.status === 401) {
+          this.logout();
+        }
+      }
+    });
+  }
+
+  // Déconnecte l'utilisateur en supprimant le token et les données locales
   logout(): void {
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem(this.USER_KEY);
     this.currentUserSubject.next(null);
   }
 
+  // Retourne le token JWT stocké en local
   getToken(): string | null {
     return localStorage.getItem(this.TOKEN_KEY);
   }
 
+  // Retourne les données de l'utilisateur actuellement connecté
   getCurrentUser(): AuthResponse | null {
     return this.currentUserSubject.value;
   }
 
+  // Vérifie si l'utilisateur est authentifié (présence du token)
   isAuthenticated(): boolean {
     return !!this.getToken();
   }
 
+  // Vérifie si l'utilisateur possède l'un des rôles spécifiés
   hasRole(roles: string[]): boolean {
     const user = this.getCurrentUser();
     if (!user) return false;
     return roles.includes(user.role);
   }
 
+  // Récupère les données utilisateur depuis le localStorage
   private getStoredUser(): AuthResponse | null {
     const storedUser = localStorage.getItem(this.USER_KEY);
     if (storedUser) {

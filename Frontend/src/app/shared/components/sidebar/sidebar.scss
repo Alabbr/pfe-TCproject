@@ -73,9 +73,39 @@
   font-weight: 600;
 }
 
+// Accordion header for Documents
+.accordion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  padding: var(--spacing-2) var(--spacing-6);
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+  user-select: none;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+}
+
+.accordion-arrow {
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.5);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &.expanded {
+    transform: rotate(180deg);
+  }
+}
+
 .nav-items {
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+  max-height: 600px;
+  opacity: 1;
 }
 
 .nav-link {
@@ -86,6 +116,7 @@
   color: rgba(255, 255, 255, 0.7);
   border-left: 3px solid transparent;
   transition: all var(--transition-base);
+  text-decoration: none;
 
   &:hover {
     background-color: rgba(255, 255, 255, 0.05);
@@ -110,6 +141,25 @@
 .nav-label {
   font-size: 14px;
   font-weight: 500;
+  flex: 1;
+}
+
+.nav-badge {
+  background-color: #ef4444;
+  color: white;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: auto;
+  box-shadow: 0 0 0 2px var(--color-primary);
+  animation: pulseBadge 2s infinite;
+}
+
+@keyframes pulseBadge {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 4px rgba(239, 68, 68, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
 }
 
 .sidebar-footer {
@@ -153,4 +203,25 @@
 .user-role {
   font-size: 11px;
   color: rgba(255, 255, 255, 0.6);
+}
+
+// Sub-item styling for department docs
+.sub-item {
+  padding-left: 2.8rem;
+  font-size: 0.9em;
+  position: relative;
+
+  .nav-icon {
+    font-size: 1.1rem;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 1.6rem;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: rgba(255, 255, 255, 0.12);
+  }
 }

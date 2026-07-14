@@ -1,0 +1,112 @@
+<div class="modal-overlay" (click)="close.emit()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="header-left">
+        <span class="material-symbols-outlined header-icon">inbox</span>
+        <div>
+          <h2>Boîte de Réception</h2>
+          <p>Vos documents privés et confidentiels</p>
+        </div>
+      </div>
+      <button class="close-btn" (click)="close.emit()">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Tabs -->
+      <div class="inbox-tabs" style="display: flex; gap: 1rem; border-bottom: 1px solid var(--color-border); margin-bottom: 1rem; padding-bottom: 0.5rem;">
+        <button class="tab-btn" [class.active]="activeTab === 'inbox'" (click)="setTab('inbox')" style="background: none; border: none; font-size: 1rem; font-weight: 600; color: var(--color-text-muted); cursor: pointer; padding: 0.5rem 1rem; border-radius: 8px; transition: all 0.2s;">
+          <span class="material-symbols-outlined" style="vertical-align: middle; margin-right: 4px; font-size: 18px;">inbox</span> Reçus ({{inboxItems.length}})
+        </button>
+        <button class="tab-btn" [class.active]="activeTab === 'sent'" (click)="setTab('sent')" style="background: none; border: none; font-size: 1rem; font-weight: 600; color: var(--color-text-muted); cursor: pointer; padding: 0.5rem 1rem; border-radius: 8px; transition: all 0.2s;">
+          <span class="material-symbols-outlined" style="vertical-align: middle; margin-right: 4px; font-size: 18px;">send</span> Envoyés ({{sentItems.length}})
+        </button>
+      </div>
+
+      <div class="loading-state" *ngIf="isLoading">
+        <div class="spinner"></div>
+        <p>Chargement des documents...</p>
+      </div>
+
+      <!-- INBOX TAB -->
+      <ng-container *ngIf="activeTab === 'inbox'">
+        <div class="empty-state" *ngIf="!isLoading && inboxItems.length === 0">
+          <span class="material-symbols-outlined">drafts</span>
+          <h3>Votre boîte de réception est vide</h3>
+          <p>Vous n'avez reçu aucun document privé pour le moment.</p>
+        </div>
+
+        <div class="inbox-list" *ngIf="!isLoading && inboxItems.length > 0">
+          <div class="inbox-item" *ngFor="let item of inboxItems" [class.unread]="!item.isRead" (click)="openDocument(item)">
+            <div class="item-status">
+              <div class="status-dot" *ngIf="!item.isRead"></div>
+            </div>
+            <div class="item-sender">
+              <div class="avatar-small">
+                <img *ngIf="item.document.uploader?.profilePictureUrl" [src]="item.document.uploader.profilePictureUrl" alt="">
+                <span *ngIf="!item.document.uploader?.profilePictureUrl" class="material-symbols-outlined">person</span>
+              </div>
+              <div class="sender-info">
+                <span class="name">{{ item.document.uploader?.firstName }} {{ item.document.uploader?.lastName }}</span>
+                <span class="role">{{ item.document.uploader?.role }}</span>
+              </div>
+            </div>
+            <div class="item-content">
+              <span class="title">{{ item.document.title }}</span>
+              <span class="desc" *ngIf="item.document.description">{{ item.document.description }}</span>
+            </div>
+            <div class="item-file">
+              <div class="file-badge">
+                <span class="material-symbols-outlined">{{ getIconForFileType(item.document.fileType) }}</span>
+                {{ formatFileSize(item.document.fileSize) }}
+              </div>
+            </div>
+            <div class="item-date">
+              {{ item.document.uploadDate | date:'dd MMM, HH:mm' }}
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- SENT TAB -->
+      <ng-container *ngIf="activeTab === 'sent'">
+        <div class="empty-state" *ngIf="!isLoading && sentItems.length === 0">
+          <span class="material-symbols-outlined">send</span>
+          <h3>Aucun document envoyé</h3>
+          <p>Vous n'avez envoyé aucun document privé pour le moment.</p>
+        </div>
+
+        <div class="inbox-list" *ngIf="!isLoading && sentItems.length > 0">
+          <div class="inbox-item unread" *ngFor="let item of sentItems" (click)="openDocument(item)">
+            <div class="item-sender">
+              <div class="avatar-small" style="background: linear-gradient(135deg, #10B981, #059669);">
+                <span class="material-symbols-outlined">person</span>
+              </div>
+              <div class="sender-info">
+                <span class="name">À: {{ item.recipient?.firstName }} {{ item.recipient?.lastName }}</span>
+                <span class="role" style="color: #10B981;">
+                  <span class="material-symbols-outlined" style="font-size: 12px; vertical-align: middle;">done_all</span> Envoyé
+                </span>
+              </div>
+            </div>
+            <div class="item-content">
+              <span class="title">{{ item.document.title }}</span>
+              <span class="desc" *ngIf="item.document.description">{{ item.document.description }}</span>
+            </div>
+            <div class="item-file">
+              <div class="file-badge">
+                <span class="material-symbols-outlined">{{ getIconForFileType(item.document.fileType) }}</span>
+                {{ formatFileSize(item.document.fileSize) }}
+              </div>
+            </div>
+            <div class="item-date">
+              {{ item.document.uploadDate | date:'dd MMM, HH:mm' }}
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+    </div>
+  </div>
+</div>

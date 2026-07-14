@@ -1,0 +1,69 @@
+<div class="kb-container">
+  <div class="header-section">
+    <div class="title-group">
+      <span class="material-symbols-outlined header-icon">library_books</span>
+      <div>
+        <h1>Base de Connaissances IA</h1>
+        <p class="subtitle">Gérez les documents qui alimentent le cerveau du Chatbot RAG. (Espace Super Admin)</p>
+      </div>
+    </div>
+    
+    <button class="btn-bulk" (click)="triggerBulkImport()" [disabled]="isBulkImporting">
+      <span class="material-symbols-outlined" [class.spinning]="isBulkImporting">
+        {{ isBulkImporting ? 'sync' : 'auto_awesome_mosaic' }}
+      </span>
+      {{ isBulkImporting ? 'Importation en cours...' : 'Injection Initiale (Bulk Import)' }}
+    </button>
+  </div>
+
+  <div class="upload-section">
+    <div class="upload-card">
+      <div class="card-header">
+        <h2>Entraîner l'IA avec un nouveau document</h2>
+        <p>Glissez-déposez un fichier PDF contenant des tableaux, lois ou statistiques.</p>
+      </div>
+
+      <div class="drop-zone" 
+           [class.dragging]="isDragging"
+           (dragover)="onDragOver($event)"
+           (dragleave)="onDragLeave($event)"
+           (drop)="onDrop($event)"
+           (click)="fileInput.click()">
+        
+        <input type="file" #fileInput (change)="onFileSelected($event)" accept="application/pdf" style="display: none;">
+        
+        <div class="drop-content" *ngIf="!selectedFile && !isUploading">
+          <div class="icon-circle">
+            <span class="material-symbols-outlined">cloud_upload</span>
+          </div>
+          <h3>Cliquez ou glissez un PDF ici</h3>
+          <span class="file-hint">Format PDF uniquement. Max 50MB.</span>
+        </div>
+
+        <div class="file-selected" *ngIf="selectedFile && !isUploading" (click)="$event.stopPropagation()">
+          <span class="material-symbols-outlined file-icon">picture_as_pdf</span>
+          <div class="file-info">
+            <span class="file-name">{{ selectedFile.name }}</span>
+            <span class="file-size">{{ (selectedFile.size / 1024 / 1024).toFixed(2) }} MB</span>
+          </div>
+          <button class="btn-icon" (click)="removeFile()" title="Retirer le fichier">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        <div class="uploading-state" *ngIf="isUploading">
+          <div class="spinner"></div>
+          <h3>L'IA analyse et ingère le document...</h3>
+          <p>Cette opération peut prendre quelques instants pour extraire les tableaux et graphiques.</p>
+        </div>
+      </div>
+
+      <div class="actions" *ngIf="selectedFile && !isUploading">
+        <button class="btn-primary" (click)="uploadFile()">
+          <span class="material-symbols-outlined">smart_toy</span>
+          Démarrer l'Apprentissage
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,139 @@
+<div class="modal-overlay" (click)="close.emit()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="title-section">
+        <span class="material-symbols-outlined">cloud_upload</span>
+        <h2>Nouveau Téléversement</h2>
+      </div>
+      <button class="close-btn" (click)="close.emit()">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <form [formGroup]="uploadForm" (ngSubmit)="onSubmit()">
+        
+        <!-- Drag & Drop Zone -->
+        <div class="upload-zone" 
+             [class.dragging]="isDragging"
+             (dragover)="onDragOver($event)"
+             (dragleave)="onDragLeave($event)"
+             (drop)="onDrop($event)">
+          
+          <input type="file" #fileInput (change)="onFileSelected($event)" class="hidden-input">
+          
+          <div class="upload-content" *ngIf="!selectedFile">
+            <span class="material-symbols-outlined upload-icon">note_add</span>
+            <h3>Glissez votre fichier ici</h3>
+            <p>ou</p>
+            <button type="button" class="btn-outline" (click)="fileInput.click()">Parcourir</button>
+            <p class="file-hint">Tous les types de fichiers sont acceptés (PDF, Image, Word...)</p>
+          </div>
+
+          <div class="selected-file-card" *ngIf="selectedFile">
+            <div class="file-info">
+              <span class="material-symbols-outlined">description</span>
+              <div class="file-details">
+                <span class="file-name">{{ selectedFile.name }}</span>
+                <span class="file-size">{{ (selectedFile.size / 1024 / 1024) | number:'1.2-2' }} MB</span>
+              </div>
+            </div>
+            <button type="button" class="btn-icon" (click)="selectedFile = null">
+              <span class="material-symbols-outlined">delete</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="error-text" *ngIf="!selectedFile && uploadForm.touched">Veuillez sélectionner un fichier</div>
+
+        <!-- Form Fields -->
+        <div class="form-group mt-4">
+          <label>Titre du document *</label>
+          <input type="text" formControlName="title" placeholder="Ex: Rapport Annuel 2024" class="form-control">
+          <div class="error-text" *ngIf="uploadForm.get('title')?.invalid && uploadForm.get('title')?.touched">Le titre est requis</div>
+        </div>
+
+        <div class="form-group mt-3">
+          <label>Description (Optionnel)</label>
+          <textarea formControlName="description" placeholder="Ajoutez un petit détail..." class="form-control" rows="3"></textarea>
+        </div>
+
+        <!-- Visibility Toggle -->
+        <div class="visibility-section mt-4">
+          <label>Visibilité</label>
+          <div class="radio-group">
+            <label class="radio-card" [class.active]="uploadForm.get('isPublic')?.value === 'true'">
+              <input type="radio" formControlName="isPublic" value="true">
+              <span class="material-symbols-outlined">public</span>
+              <div class="radio-info">
+                <strong>Publique</strong>
+                <span>Visible par tout le monde</span>
+              </div>
+            </label>
+
+            <label class="radio-card" [class.active]="uploadForm.get('isPublic')?.value === 'false'">
+              <input type="radio" formControlName="isPublic" value="false">
+              <span class="material-symbols-outlined">lock</span>
+              <div class="radio-info">
+                <strong>Privé</strong>
+                <span>Envoyé à des personnes spécifiques</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Department & Recipients Selection for Private Docs -->
+        <div class="private-selection" *ngIf="isPrivate">
+          <div class="form-group mt-4">
+            <label>Sélectionnez un Département *</label>
+            <select formControlName="departmentId" class="form-control">
+              <option value="">Tous les départements (Ou choisissez un département)</option>
+              <option *ngFor="let dept of departments" [value]="dept.id">
+                {{ dept.name }}
+              </option>
+            </select>
+          </div>
+
+            <div class="form-group mt-4">
+              <label>Sélectionnez les destinataires *</label>
+              <div class="checkbox-list-container form-control">
+                <label class="checkbox-item" *ngFor="let user of filteredUsers">
+                  <input type="checkbox" 
+                         [checked]="isRecipientSelected(user.id)" 
+                         (change)="toggleRecipient(user.id, $event)">
+                  <span class="checkbox-label">
+                    {{ user.firstName }} {{ user.lastName }}
+                    <span class="user-role-badge badge badge-primary ml-2">{{ user.jobPositionName || user.role }}</span>
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Validation Toggle -->
+            <div class="form-group mt-4">
+              <label class="checkbox-card" [class.checked]="uploadForm.get('needsValidation')?.value">
+                <input type="checkbox" formControlName="needsValidation" style="display: none;">
+                <div class="checkbox-content">
+                  <div class="checkbox-box">
+                    <span class="material-symbols-outlined check-icon" *ngIf="uploadForm.get('needsValidation')?.value">check</span>
+                  </div>
+                  <div class="checkbox-text">
+                    <strong>Nécessite une validation</strong>
+                    <span>Le document sera envoyé dans la boîte de validation du Chef de Département avant d'être accessible.</span>
+                  </div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+        <div class="modal-footer mt-4">
+          <button type="button" class="btn-cancel" (click)="close.emit()" [disabled]="isUploading">Annuler</button>
+          <button type="submit" class="btn-submit" [disabled]="isUploading">
+            <span class="spinner-small" *ngIf="isUploading"></span>
+            <span *ngIf="!isUploading">Envoyer le Document</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

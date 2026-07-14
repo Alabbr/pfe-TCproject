@@ -1,0 +1,44 @@
+<div class="my-tasks-container">
+  <div class="page-header">
+    <h1>Mes Missions</h1>
+    <p class="subtitle">Consultez et mettez à jour l'état d'avancement de vos missions.</p>
+  </div>
+
+  <div class="loading" *ngIf="isLoading">Chargement...</div>
+
+  <div class="tasks-table-wrapper" *ngIf="!isLoading">
+    <table class="tasks-table">
+      <thead>
+        <tr>
+          <th>Mission</th>
+          <th>Projet (ID)</th>
+          <th>Priorité</th>
+          <th>Échéance</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let t of tasks">
+          <td>
+            <strong>{{ t.title }}</strong>
+            <div class="desc">{{ t.description }}</div>
+          </td>
+          <td>Projet #{{ t.projectId }}</td>
+          <td><span class="badge" [ngClass]="t.priority.toLowerCase()">{{ t.priority }}</span></td>
+          <td>{{ t.deadline | date:'dd MMM yyyy' }}</td>
+          <td><span class="badge status" [ngClass]="t.status.toLowerCase()">{{ t.status }}</span></td>
+          <td>
+            <button class="btn-action start" *ngIf="t.status === 'A_FAIRE'" (click)="changeStatus(t, 'EN_COURS')">Commencer</button>
+            <button class="btn-action review" *ngIf="t.status === 'EN_COURS'" (click)="changeStatus(t, 'EN_VALIDATION')">Demander Validation</button>
+            <span class="text-muted" *ngIf="t.status === 'EN_VALIDATION'">En attente de validation</span>
+            <span class="text-success" *ngIf="t.status === 'TERMINE'">Validée</span>
+          </td>
+        </tr>
+        <tr *ngIf="tasks.length === 0">
+          <td colspan="6" class="text-center">Aucune mission assignée.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -21,6 +21,7 @@ public class SuperAdminDashboardService {
     private final UserRepository userRepository;
     private final DepartmentRepository departmentRepository;
 
+    // Calcule et retourne toutes les stats du tableau de bord Super Admin (utilisateurs, départements, graphiques, etc.)
     public SuperAdminDashboardStatsDto getDashboardStats() {
         List<User> allUsers = userRepository.findAll();
         List<Department> allDepartments = departmentRepository.findAll();
@@ -52,7 +53,7 @@ public class SuperAdminDashboardService {
                 .collect(Collectors.groupingBy(User::getRole, Collectors.counting()));
         
         List<SuperAdminDashboardStatsDto.ChartData> roleChart = roleCount.entrySet().stream()
-                .map(e -> new SuperAdminDashboardStatsDto.ChartData(e.getKey().name(), e.getValue()))
+                .map(e -> new SuperAdminDashboardStatsDto.ChartData(formatRoleName(e.getKey()), e.getValue()))
                 .collect(Collectors.toList());
 
         // Top users (recent active)
@@ -93,5 +94,16 @@ public class SuperAdminDashboardService {
                 .topUsers(topUsers)
                 .pendingUsers(pendingUsers)
                 .build();
+    }
+
+    // Formate le nom d'un rôle technique en libellé français lisible
+    private String formatRoleName(RoleName role) {
+        switch (role) {
+            case SUPER_ADMIN: return "Super Administrateur";
+            case DIRECTEUR_GENERAL: return "Directeur Général";
+            case DIRECTEUR: return "Chef de Département";
+            case EMPLOYE: return "Employé";
+            default: return role.name().replace("_", " ");
+        }
     }
 }

@@ -1,0 +1,166 @@
+<div class="documents-dashboard-container">
+  <div class="header-section">
+    <div>
+      <h1 class="page-title">Espace Documents</h1>
+      <p class="page-subtitle">Partage et échange sécurisé de documents</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary" (click)="openUpload()">
+        <span class="material-symbols-outlined">upload_file</span>
+        Nouveau Téléversement
+      </button>
+    </div>
+  </div>
+
+  <div class="stats-grid" *ngIf="stats">
+    
+    <!-- Validation Inbox (Only for Chef) -->
+    <div class="stat-card interactive" (click)="openValidation()" *ngIf="userRole === 'RESPONSABLE' || userRole === 'DIRECTEUR' || userRole === 'DIRECTEUR_GENERAL'">
+      <div class="stat-icon" style="color: #f59e0b; background: rgba(245, 158, 11, 0.1);">
+        <span class="material-symbols-outlined">rule</span>
+        <div class="notification-badge" *ngIf="pendingCount > 0" style="background: #ef4444; color: white;">{{ pendingCount }}</div>
+      </div>
+      <div class="stat-info">
+        <h3>À Valider</h3>
+        <p class="stat-value">Documents en attente</p>
+      </div>
+      <div class="stat-action">
+        <span class="material-symbols-outlined">arrow_forward</span>
+      </div>
+    </div>
+
+    <!-- Inbox Card -->
+    <div class="stat-card interactive" (click)="openInbox()">
+      <div class="stat-icon inbox-icon">
+        <span class="material-symbols-outlined">inbox</span>
+        <div class="notification-badge" *ngIf="stats.unreadCount > 0">{{ stats.unreadCount }}</div>
+      </div>
+      <div class="stat-info">
+        <h3>Boîte de Réception</h3>
+        <p class="stat-value">{{ stats.totalReceived }} reçus</p>
+      </div>
+      <div class="stat-action">
+        <span class="material-symbols-outlined">arrow_forward</span>
+      </div>
+    </div>
+
+    <!-- Public Library Card -->
+    <div class="stat-card interactive" (click)="openPublic()">
+      <div class="stat-icon public-icon">
+        <span class="material-symbols-outlined">public</span>
+      </div>
+      <div class="stat-info">
+        <h3>Bibliothèque Publique</h3>
+        <p class="stat-value">{{ stats.publicDocsCount }} documents</p>
+      </div>
+      <div class="stat-action">
+        <span class="material-symbols-outlined">arrow_forward</span>
+      </div>
+    </div>
+
+    <!-- Sent Docs Card (Mes Envois) -->
+    <div class="stat-card interactive" (click)="openValidatedDocs()">
+      <div class="stat-icon sent-icon">
+        <span class="material-symbols-outlined">send</span>
+      </div>
+      <div class="stat-info">
+        <h3>Mes Envois</h3>
+        <p class="stat-value">{{ stats.totalSent }} envoyés</p>
+      </div>
+      <div class="stat-action">
+        <span class="material-symbols-outlined">arrow_forward</span>
+      </div>
+    </div>
+
+    <!-- Upload History Card (Chef & Admins) -->
+    <div class="stat-card interactive" (click)="openHistory()" *ngIf="userRole === 'RESPONSABLE' || userRole === 'DIRECTEUR' || userRole === 'DIRECTEUR_GENERAL' || userRole === 'SUPER_ADMIN'">
+      <div class="stat-icon" style="color: #8b5cf6; background: rgba(139, 92, 246, 0.1);">
+        <span class="material-symbols-outlined">history</span>
+      </div>
+      <div class="stat-info">
+        <h3>Historique</h3>
+        <p class="stat-value" *ngIf="userRole === 'DIRECTEUR' || userRole === 'RESPONSABLE'">Envois du département</p>
+        <p class="stat-value" *ngIf="userRole === 'SUPER_ADMIN' || userRole === 'DIRECTEUR_GENERAL'">Tous les envois</p>
+      </div>
+      <div class="stat-action">
+        <span class="material-symbols-outlined">arrow_forward</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Chargement de l'espace...</p>
+  </div>
+
+  <div class="charts-section" *ngIf="stats">
+    
+    <!-- Modern Stats Chart Card -->
+    <div class="chart-card">
+      <div class="card-header">
+        <h3><span class="material-symbols-outlined">analytics</span> Aperçu de l'Activité</h3>
+        <span class="badge-live">En temps réel</span>
+      </div>
+      
+      <div class="activity-content">
+        <!-- Progress Bar: Taux de lecture -->
+        <div class="stat-progress">
+          <div class="progress-header">
+            <span>Taux de lecture (Boîte de réception)</span>
+            <span class="percentage">{{ getReadPercentage() }}%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" [style.width.%]="getReadPercentage()"></div>
+          </div>
+          <p class="progress-subtext">{{ stats.totalReceived - stats.unreadCount }} lus sur {{ stats.totalReceived }} reçus</p>
+        </div>
+
+        <!-- Mini CSS Bar Chart -->
+        <div class="mini-chart">
+          <div class="chart-column">
+            <div class="bar" [style.height.px]="getBarHeight(stats.totalSent)" style="background: var(--color-primary);"></div>
+            <span class="label">Envoyés</span>
+            <span class="val">{{ stats.totalSent }}</span>
+          </div>
+          <div class="chart-column">
+            <div class="bar" [style.height.px]="getBarHeight(stats.totalReceived)" style="background: var(--color-success);"></div>
+            <span class="label">Reçus</span>
+            <span class="val">{{ stats.totalReceived }}</span>
+          </div>
+          <div class="chart-column">
+            <div class="bar" [style.height.px]="getBarHeight(stats.publicDocsCount)" style="background: var(--color-accent);"></div>
+            <span class="label">Publics</span>
+            <span class="val">{{ stats.publicDocsCount }}</span>
+          </div>
+          <div class="chart-column" *ngIf="pendingCount > 0">
+            <div class="bar" [style.height.px]="getBarHeight(pendingCount)" style="background: var(--color-warning);"></div>
+            <span class="label">À Valider</span>
+            <span class="val">{{ pendingCount }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pro Tip Card with Glass effect -->
+    <div class="chart-card glass-panel" style="background: linear-gradient(135deg, var(--color-primary) 0%, #2563eb 100%); color: white;">
+      <h3 style="color: white; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 0.75rem;"><span class="material-symbols-outlined" style="color: white;">lightbulb</span> Astuce de Pro</h3>
+      <div class="tip-content" style="margin-top: 1rem;">
+        <p style="color: rgba(255,255,255,0.9); line-height: 1.6;">Saviez-vous que vous pouvez envoyer un document avec l'option <strong>Public</strong> pour le rendre accessible à toute l'entreprise dans la bibliothèque ?</p>
+        <button class="btn-glass" (click)="openUpload()" style="margin-top: 1.5rem;">
+          <span class="material-symbols-outlined" style="font-size: 1.2rem;">share</span>
+          Partager un document
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Placeholder for Modals. We will implement them as separate components and include them here with *ngIf -->
+<app-document-upload-modal *ngIf="showUploadModal" (close)="closeModals()"></app-document-upload-modal>
+<app-public-documents-modal *ngIf="showPublicModal" (close)="closeModals()"></app-public-documents-modal>
+<app-private-inbox-modal *ngIf="showInboxModal" (close)="closeModals()"></app-private-inbox-modal>
+<app-validation-inbox-modal *ngIf="showValidationModal" (close)="closeModals()"></app-validation-inbox-modal>
+<app-validated-docs-modal *ngIf="showValidatedDocsModal" (close)="closeModals()"></app-validated-docs-modal>
+<app-department-history-modal *ngIf="showHistoryModal" (close)="closeModals()"></app-department-history-modal>

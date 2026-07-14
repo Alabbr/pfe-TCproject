@@ -1,0 +1,89 @@
+<div class="chat-container">
+  <!-- Sidebar : Historique des conversations -->
+  <div class="chat-sidebar" [class.open]="isSidebarOpen">
+    <div class="sidebar-header">
+      <button class="btn-new" (click)="newConversation()">
+        <span class="material-symbols-outlined">add</span>
+        Nouvelle discussion
+      </button>
+    </div>
+    
+    <div class="conversation-list">
+      <div class="conversation-item" 
+           *ngFor="let conv of conversations" 
+           [class.active]="conv.id === currentConversationId"
+           (click)="selectConversation(conv.id)">
+        <div class="conv-content">
+          <span class="title">{{ conv.title }}</span>
+          <span class="date">{{ conv.updatedAt | date:'dd MMM, HH:mm' }}</span>
+        </div>
+        <button class="btn-delete" (click)="deleteConversation($event, conv.id)" title="Supprimer la discussion">
+          <span class="material-symbols-outlined">delete</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Zone de chat -->
+  <div class="chat-wrapper">
+  <div class="chat-header">
+    <div class="header-info">
+      <button class="btn-menu" (click)="toggleSidebar()" title="Historique">
+        <span class="material-symbols-outlined">menu</span>
+      </button>
+      <div class="ai-avatar">
+        <span class="material-symbols-outlined">smart_toy</span>
+      </div>
+      <div>
+        <h2>Assistant IA (RAG)</h2>
+        <span class="status-badge">Connecté à la Base de Connaissances</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="chat-messages" #chatScroll>
+    <div class="welcome-banner" *ngIf="messages.length === 1">
+      <span class="material-symbols-outlined bg-icon">auto_awesome</span>
+      <h3>Posez-moi une question sur l'entreprise</h3>
+      <p>Exemples: "Quel est le bénéfice en 2024 ?", "Comment fonctionne la facturation ?"</p>
+    </div>
+
+    <div class="message-row" *ngFor="let msg of messages" [class.user]="msg.role === 'user'">
+      <div class="avatar" *ngIf="msg.role === 'assistant'">
+        <span class="material-symbols-outlined">smart_toy</span>
+      </div>
+      <div class="message-bubble">
+        <div class="content">{{ msg.content }}</div>
+        <div class="time">{{ msg.timestamp | date:'HH:mm' }}</div>
+      </div>
+    </div>
+
+    <div class="message-row" *ngIf="isLoading">
+      <div class="avatar">
+        <span class="material-symbols-outlined">smart_toy</span>
+      </div>
+      <div class="message-bubble typing">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chat-input-area">
+    <div class="input-container">
+      <textarea 
+        [(ngModel)]="newMessage" 
+        (keydown)="handleKeyDown($event)"
+        placeholder="Posez votre question à l'IA..." 
+        rows="1"
+        [disabled]="isLoading">
+      </textarea>
+      <button class="btn-send" (click)="sendMessage()" [disabled]="!newMessage.trim() || isLoading">
+        <span class="material-symbols-outlined">send</span>
+      </button>
+    </div>
+    <div class="disclaimer">L'IA peut faire des erreurs. Vérifiez toujours les informations importantes.</div>
+  </div>
+</div>
+</div>

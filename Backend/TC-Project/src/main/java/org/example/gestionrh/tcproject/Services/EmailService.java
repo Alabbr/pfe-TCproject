@@ -13,6 +13,7 @@ public class EmailService {
 
     private final JavaMailSender javaMailSender;
 
+    // Envoie un email au chef de département pour l'informer qu'un nouvel employé est en attente d'affectation
     public void sendChefNotificationEmail(String toEmail, String chefName, String employeeName, String departmentName) {
         try {
             MimeMessage message = javaMailSender.createMimeMessage();
@@ -45,6 +46,7 @@ public class EmailService {
             System.err.println("Failed to send email to " + toEmail + ": " + e.getMessage());
         }
     }
+    // Envoie un email de bienvenue au nouvel utilisateur avec ses identifiants de connexion
     public void sendWelcomeEmail(String toEmail, String fullName, String loginEmail, String password) {
         try {
             MimeMessage message = javaMailSender.createMimeMessage();

@@ -40,9 +40,15 @@ public class DataInitializer implements CommandLineRunner {
                 "Sous supervision directe du DG", 
                 List.of("Codification et Admission", "Statistiques, Analyse et communication", "Etude et projets", "Gestion des courbes des taux et des LEI"));
 
+            Department dg = createDepartmentWithGestions("Direction Générale", 
+                "Direction Générale et Sécurité", 
+                List.of("Directeur Général", "Directeur Général Adjoint", "Sécurité", "Audit Interne"));
+
             // Initialize Admin User
-            if (!userRepository.existsByEmail("admin@tunisie-clearing.tn")) {
-                User adminUser = User.builder()
+            // Initialize Admin User
+            User adminUser = userRepository.findByEmail("admin@tunisie-clearing.tn").orElse(null);
+            if (adminUser == null) {
+                adminUser = User.builder()
                         .firstName("Super")
                         .lastName("Admin")
                         .email("admin@tunisie-clearing.tn")
@@ -53,6 +59,25 @@ public class DataInitializer implements CommandLineRunner {
                         .isActive(true)
                         .build();
                 userRepository.save(adminUser);
+            } else {
+                // Ensure it is always SUPER_ADMIN
+                adminUser.setRole(RoleName.SUPER_ADMIN);
+                userRepository.save(adminUser);
+            }
+            
+            // Initialize Chef Departement User
+            if (!userRepository.existsByEmail("chef@tunisie-clearing.tn")) {
+                User chefUser = User.builder()
+                        .firstName("Chef")
+                        .lastName("Ops")
+                        .email("chef@tunisie-clearing.tn")
+                        .password(passwordEncoder.encode("Chef@TC2024"))
+                        .role(RoleName.DIRECTEUR) // DIRECTEUR maps to Chef de Département
+                        .department(ops)
+                        .permissions(Set.of(Permission.MANAGE_DOCUMENTS, Permission.VIEW_DASHBOARD))
+                        .isActive(true)
+                        .build();
+                userRepository.save(chefUser);
             }
         }
     }

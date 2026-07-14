@@ -25,6 +25,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
 
+    // Retourne tous les utilisateurs actifs
     public List<UserResponse> getAllUsers() {
         return userRepository.findAll()
                 .stream()
@@ -33,6 +34,7 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
+    // Retourne tous les utilisateurs archivés (inactifs)
     public List<UserResponse> getArchivedUsers() {
         return userRepository.findAll()
                 .stream()
@@ -41,12 +43,14 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
+    // Retourne un utilisateur par son ID
     public UserResponse getUserById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Utilisateur introuvable: " + id));
         return toResponse(user);
     }
 
+    // Crée un nouvel utilisateur, envoie un email au chef et un email de bienvenue
     @Transactional
     public UserResponse createUser(CreateUserRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -85,6 +89,7 @@ public class UserService {
         return toResponse(savedUser);
     }
 
+    // Met à jour les informations d'un utilisateur existant (nom, rôle, département, permissions, mot de passe)
     @Transactional
     public UserResponse updateUser(Long id, UpdateUserRequest request) {
         User user = userRepository.findById(id)
@@ -109,6 +114,7 @@ public class UserService {
         return toResponse(userRepository.save(user));
     }
 
+    // Supprime un utilisateur (soft delete : le met en inactif)
     @Transactional
     public void deleteUser(Long id) {
         User user = userRepository.findById(id)
@@ -117,6 +123,7 @@ public class UserService {
         userRepository.save(user);
     }
 
+    // Restaure un utilisateur archivé (le remet actif)
     @Transactional
     public void restoreUser(Long id) {
         User user = userRepository.findById(id)
@@ -125,6 +132,7 @@ public class UserService {
         userRepository.save(user);
     }
 
+    // Supprime définitivement un utilisateur (uniquement s'il est déjà archivé)
     @Transactional
     public void permanentDeleteUser(Long id) {
         User user = userRepository.findById(id)
@@ -135,6 +143,7 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
+    // Retourne tous les utilisateurs d'un département spécifique
     public List<UserResponse> getUsersByDepartment(Long departmentId) {
         return userRepository.findByDepartment_Id(departmentId)
                 .stream()
@@ -142,6 +151,7 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
+    // Met à jour le téléphone et l'adresse d'un utilisateur (profil personnel)
     @Transactional
     public UserResponse updateProfile(Long id, String phoneNumber, String address) {
         User user = userRepository.findById(id)
@@ -151,6 +161,7 @@ public class UserService {
         return toResponse(userRepository.save(user));
     }
 
+    // Met à jour la photo de profil d'un utilisateur avec l'URL Cloudinary
     @Transactional
     public UserResponse uploadProfilePicture(Long id, String imageUrl) {
         User user = userRepository.findById(id)
@@ -159,6 +170,7 @@ public class UserService {
         return toResponse(userRepository.save(user));
     }
 
+    // Affecte un poste de travail à un utilisateur
     @Transactional
     public UserResponse assignJobPosition(Long userId, Long jobPositionId) {
         User user = userRepository.findById(userId)
@@ -171,7 +183,51 @@ public class UserService {
         return toResponse(userRepository.save(user));
     }
 
-    // ---- Mapper ----
+    /**
+     * Update individual user permissions.
+     * Chef de Département can only update employees in their own department,
+     * and only a subset of permissions (no admin-level permissions).
+     */
+    @Transactional
+    public UserResponse updateUserPermissions(Long userId, java.util.Set<org.example.gestionrh.tcproject.Entities.Permission> permissions, User currentUser) {
+        User targetUser = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable: " + userId));
+
+        boolean isSuperAdmin = currentUser.getRole() == org.example.gestionrh.tcproject.Entities.RoleName.SUPER_ADMIN
+                || currentUser.getRole() == org.example.gestionrh.tcproject.Entities.RoleName.DIRECTEUR_GENERAL;
+
+        if (!isSuperAdmin) {
+            // Chef de Département: validate same department
+            if (currentUser.getDepartment() == null || targetUser.getDepartment() == null
+                    || !currentUser.getDepartment().getId().equals(targetUser.getDepartment().getId())) {
+                throw new RuntimeException("Vous ne pouvez modifier que les employés de votre département.");
+            }
+
+            // Chef cannot modify other Chefs or admins
+            if (targetUser.getRole() == org.example.gestionrh.tcproject.Entities.RoleName.SUPER_ADMIN
+                    || targetUser.getRole() == org.example.gestionrh.tcproject.Entities.RoleName.DIRECTEUR_GENERAL
+                    || targetUser.getRole() == org.example.gestionrh.tcproject.Entities.RoleName.DIRECTEUR) {
+                throw new RuntimeException("Vous ne pouvez pas modifier les permissions d'un chef ou administrateur.");
+            }
+
+            // Chef can only set allowed permissions (no admin-level ones)
+            java.util.Set<org.example.gestionrh.tcproject.Entities.Permission> chefAllowed = java.util.Set.of(
+                    org.example.gestionrh.tcproject.Entities.Permission.VIEW_DASHBOARD,
+                    org.example.gestionrh.tcproject.Entities.Permission.VIEW_DOCUMENTS,
+                    org.example.gestionrh.tcproject.Entities.Permission.MANAGE_DOCUMENTS,
+                    org.example.gestionrh.tcproject.Entities.Permission.USE_CHATBOT,
+                    org.example.gestionrh.tcproject.Entities.Permission.VIEW_CHAT,
+                    org.example.gestionrh.tcproject.Entities.Permission.VIEW_BILLING
+            );
+            // Filter out any non-allowed permissions
+            permissions.removeIf(p -> !chefAllowed.contains(p));
+        }
+
+        targetUser.setPermissions(new java.util.HashSet<>(permissions));
+        return toResponse(userRepository.save(targetUser));
+    }
+
+    // Convertit une entité User en DTO UserResponse pour la réponse API
     public UserResponse toResponse(User user) {
         return UserResponse.builder()
                 .id(user.getId())

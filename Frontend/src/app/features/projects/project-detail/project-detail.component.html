@@ -1,0 +1,228 @@
+<div class="project-detail-container" *ngIf="project">
+  <div class="project-header">
+    <div class="title-section">
+      <h1>{{ project.title }}</h1>
+      <p>{{ project.description }}</p>
+      <div class="meta">
+        <span class="badge">Échéance: {{ project.deadline | date:'dd MMM yyyy' }}</span>
+        <span class="badge members">{{ project.members.length || 0 }} membres assignés</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-icon" (click)="openEditModal()" title="Modifier le projet">
+        <span class="material-symbols-outlined">edit</span>
+      </button>
+      <button class="btn-icon danger" (click)="showDeleteConfirmModal = true" title="Supprimer le projet">
+        <span class="material-symbols-outlined">delete</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button [class.active]="activeTab === 'tasks'" (click)="activeTab = 'tasks'">Missions (Tâches)</button>
+    <button [class.active]="activeTab === 'docs'" (click)="activeTab = 'docs'">Documents</button>
+    <button [class.active]="activeTab === 'history'" (click)="activeTab = 'history'">Traçabilité</button>
+  </div>
+
+  <div class="tab-content" *ngIf="activeTab === 'tasks'">
+    <div class="actions">
+      <button class="btn-primary" (click)="showCreateTaskModal = true">
+        <span class="material-symbols-outlined">add</span> Ajouter une mission
+      </button>
+    </div>
+
+    <div class="kanban-board">
+      <!-- Colonne: À Faire -->
+      <div class="kanban-col">
+        <h3>À Faire <span class="count">{{ tasksTodo.length }}</span></h3>
+        <div class="task-card" *ngFor="let t of tasksTodo">
+          <h4>{{ t.title }}</h4>
+          <span class="priority" [ngClass]="t.priority.toLowerCase()">{{ t.priority }}</span>
+          <div class="assignee" *ngIf="t.assignee">Resp: {{ t.assignee.firstName }}</div>
+          <div class="actions">
+            <button (click)="openStatusCommentModal(t, 'EN_COURS')">Commencer</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Colonne: En Cours -->
+      <div class="kanban-col">
+        <h3>En Cours <span class="count">{{ tasksInProgress.length }}</span></h3>
+        <div class="task-card in-progress" *ngFor="let t of tasksInProgress">
+          <h4>{{ t.title }}</h4>
+          <span class="priority" [ngClass]="t.priority.toLowerCase()">{{ t.priority }}</span>
+          <div class="assignee" *ngIf="t.assignee">Resp: {{ t.assignee.firstName }}</div>
+          <div class="actions">
+            <button (click)="openStatusCommentModal(t, 'EN_VALIDATION')">Demander Validation</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Colonne: En Validation -->
+      <div class="kanban-col">
+        <h3>En Validation <span class="count">{{ tasksReview.length }}</span></h3>
+        <div class="task-card review" *ngFor="let t of tasksReview">
+          <h4>{{ t.title }}</h4>
+          <span class="priority" [ngClass]="t.priority.toLowerCase()">{{ t.priority }}</span>
+          <div class="assignee" *ngIf="t.assignee">Resp: {{ t.assignee.firstName }}</div>
+          <div class="actions">
+            <button class="btn-success" (click)="openStatusCommentModal(t, 'TERMINE')">Valider</button>
+            <button class="btn-danger" (click)="openStatusCommentModal(t, 'EN_COURS')">Rejeter</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Colonne: Terminé -->
+      <div class="kanban-col">
+        <h3>Terminé <span class="count">{{ tasksDone.length }}</span></h3>
+        <div class="task-card done" *ngFor="let t of tasksDone">
+          <h4>{{ t.title }}</h4>
+          <div class="assignee" *ngIf="t.assignee">Fait par: {{ t.assignee.firstName }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-content docs-tab" *ngIf="activeTab === 'docs'">
+    <div class="upload-area">
+      <input type="file" id="file" (change)="onFileSelected($event)" hidden>
+      <label for="file" class="btn-primary" style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
+        <span class="material-symbols-outlined">upload_file</span>
+        Ajouter un document
+      </label>
+    </div>
+
+    <div class="docs-list">
+      <div class="doc-item" *ngFor="let doc of documents">
+        <span class="material-symbols-outlined icon">description</span>
+        <div class="doc-info">
+          <span class="name">{{ doc.fileName }}</span>
+          <span class="date">Ajouté le {{ doc.uploadedAt | date:'dd MMM yyyy HH:mm' }}</span>
+        </div>
+        <button class="btn-download" (click)="downloadDoc(doc.id)">Télécharger</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-content history-tab" *ngIf="activeTab === 'history'">
+    <h3>Sélectionnez une mission pour voir son historique</h3>
+    <div class="history-tasks">
+      <button *ngFor="let t of tasks" class="history-task-btn" [class.active]="selectedTaskTitle === t.title" (click)="loadTaskHistory(t)">
+        <span class="material-symbols-outlined">task</span>
+        {{ t.title }}
+      </button>
+    </div>
+    <div class="timeline" *ngIf="selectedTaskHistory.length > 0">
+      <h4>Historique de : {{ selectedTaskTitle }}</h4>
+      <div class="timeline-item" *ngFor="let h of selectedTaskHistory">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <div class="timeline-header">
+            <strong>{{ h.changedBy.firstName }} {{ h.changedBy.lastName }}</strong>
+            <span class="timeline-date">{{ h.changedAt | date:'dd MMM yyyy HH:mm' }}</span>
+          </div>
+          <div class="timeline-body">
+            <span class="badge old" *ngIf="h.oldStatus">{{ h.oldStatus }}</span>
+            <span class="material-symbols-outlined arrow" *ngIf="h.oldStatus">arrow_forward</span>
+            <span class="badge new">{{ h.newStatus }}</span>
+          </div>
+          <div class="timeline-comment" *ngIf="h.comment">{{ h.comment }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Create Task -->
+<div class="modal-overlay" *ngIf="showCreateTaskModal">
+  <div class="modal-content">
+    <h2>Nouvelle Mission</h2>
+    <div class="form-group">
+      <label>Titre</label>
+      <input type="text" [(ngModel)]="newTask.title">
+    </div>
+    <div class="form-group">
+      <label>Échéance (Date limite)</label>
+      <input type="date" [(ngModel)]="newTask.deadline">
+    </div>
+    <div class="form-group">
+      <label>Priorité</label>
+      <select [(ngModel)]="newTask.priority">
+        <option value="BASSE">Basse</option>
+        <option value="NORMALE">Normale</option>
+        <option value="HAUTE">Haute</option>
+        <option value="URGENTE">Urgente</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Responsable</label>
+      <select [(ngModel)]="newTask.assigneeId">
+        <option [ngValue]="null">Non assigné</option>
+        <option *ngFor="let m of project?.members" [ngValue]="m.id">{{ m.firstName }} {{ m.lastName }}</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" (click)="showCreateTaskModal = false">Annuler</button>
+      <button class="btn-primary" (click)="createTask()" [disabled]="!newTask.title">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Edit Project -->
+<div class="modal-overlay" *ngIf="showEditProjectModal">
+  <div class="modal-content">
+    <h2>Modifier le projet</h2>
+    <div class="form-group">
+      <label>Titre du projet</label>
+      <input type="text" [(ngModel)]="editProjectData.title">
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <textarea [(ngModel)]="editProjectData.description" rows="3"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Échéance</label>
+      <input type="date" [(ngModel)]="editProjectData.deadline">
+    </div>
+    <div class="form-group">
+      <label>Membres (Ctrl+Clic)</label>
+      <select multiple [(ngModel)]="editProjectData.memberIds" class="multi-select">
+        <option *ngFor="let u of users" [ngValue]="u.id">
+          {{ u.firstName }} {{ u.lastName }} ({{ u.departmentName || 'Sans département' }})
+        </option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" (click)="showEditProjectModal = false">Annuler</button>
+      <button class="btn-primary" (click)="updateProject()" [disabled]="!editProjectData.title">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Delete Confirm -->
+<div class="modal-overlay" *ngIf="showDeleteConfirmModal">
+  <div class="modal-content danger-modal">
+    <h2>Supprimer le projet ?</h2>
+    <p>Êtes-vous sûr de vouloir supprimer définitivement le projet <strong>{{ project.title }}</strong> ? Toutes les missions et documents associés seront perdus.</p>
+    <div class="modal-actions">
+      <button class="btn-secondary" (click)="showDeleteConfirmModal = false">Annuler</button>
+      <button class="btn-danger" (click)="deleteProject()">Oui, supprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Status Comment -->
+<div class="modal-overlay" *ngIf="showStatusCommentModal">
+  <div class="modal-content">
+    <h2>Changement de statut</h2>
+    <p>Veuillez ajouter un commentaire pour justifier ce changement :</p>
+    <div class="form-group">
+      <label>Commentaire</label>
+      <textarea [(ngModel)]="statusComment" rows="3" placeholder="Ex: Tâche terminée, en attente de vérification..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" (click)="closeStatusCommentModal()">Annuler</button>
+      <button class="btn-primary" (click)="confirmStatusChange()">Confirmer</button>
+    </div>
+  </div>
+</div>

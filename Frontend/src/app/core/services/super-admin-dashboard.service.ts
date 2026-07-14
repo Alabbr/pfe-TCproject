@@ -45,6 +45,7 @@ export class SuperAdminDashboardService {
 
   constructor(private http: HttpClient) {}
 
+  // Récupère les statistiques globales pour le tableau de bord Super Admin
   getStats(): Observable<SuperAdminStats> {
     return this.http.get<SuperAdminStats>(`${this.apiUrl}/stats`);
   }

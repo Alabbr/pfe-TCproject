@@ -16,8 +16,9 @@ public class SuperAdminDashboardController {
 
     private final SuperAdminDashboardService dashboardService;
 
+    // Retourne les statistiques globales pour le tableau de bord Super Admin
     @GetMapping("/stats")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('DIRECTEUR_GENERAL')")
     public ResponseEntity<SuperAdminDashboardStatsDto> getStats() {
         return ResponseEntity.ok(dashboardService.getDashboardStats());
     }

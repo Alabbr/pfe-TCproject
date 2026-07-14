@@ -1,0 +1,76 @@
+<div class="projects-container">
+  <div class="page-header">
+    <div>
+      <h1>Dossiers et Projets</h1>
+      <p class="subtitle">Gérez vos missions et suivez l'avancement des dossiers.</p>
+    </div>
+    <button class="btn-primary" (click)="showCreateModal = true">
+      <span class="material-symbols-outlined">add</span>
+      Nouveau Projet
+    </button>
+  </div>
+
+  <div class="projects-grid" *ngIf="!isLoading">
+    <div class="project-card" *ngFor="let p of projects" (click)="openProject(p.id)">
+      <div class="card-header">
+        <h3>{{ p.title }}</h3>
+        <span class="status-badge" [ngClass]="p.status.toLowerCase()">{{ p.status }}</span>
+      </div>
+      <p class="desc">{{ p.description }}</p>
+      <div class="card-footer">
+        <div class="deadline">
+          <span class="material-symbols-outlined">event</span>
+          {{ p.deadline | date:'dd MMM yyyy' }}
+        </div>
+        <div class="members">
+          <span class="material-symbols-outlined">group</span>
+          {{ p.members.length || 0 }} membres
+        </div>
+      </div>
+    </div>
+    <div class="empty-state" *ngIf="projects.length === 0">
+      <span class="material-symbols-outlined icon-large">folder_open</span>
+      <p>Aucun projet en cours</p>
+    </div>
+  </div>
+
+  <div class="loading" *ngIf="isLoading">
+    Chargement des projets...
+  </div>
+</div>
+
+<!-- Modal Création -->
+<div class="modal-overlay" *ngIf="showCreateModal">
+  <div class="modal-content">
+    <h2>Nouveau Projet</h2>
+    
+    <div class="form-group">
+      <label>Titre du projet</label>
+      <input type="text" [(ngModel)]="newProject.title" placeholder="Ex: Audit Q3 2026">
+    </div>
+    
+    <div class="form-group">
+      <label>Description</label>
+      <textarea [(ngModel)]="newProject.description" rows="3"></textarea>
+    </div>
+    
+    <div class="form-group">
+      <label>Échéance (Date Limite)</label>
+      <input type="date" [(ngModel)]="newProject.deadline">
+    </div>
+
+    <div class="form-group">
+      <label>Membres du projet (Ctrl+Clic pour en sélectionner plusieurs)</label>
+      <select multiple [(ngModel)]="newProject.memberIds" class="multi-select">
+        <option *ngFor="let u of users" [ngValue]="u.id">
+          {{ u.firstName }} {{ u.lastName }} ({{ u.departmentName || 'Sans département' }})
+        </option>
+      </select>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-secondary" (click)="showCreateModal = false">Annuler</button>
+      <button class="btn-primary" (click)="createProject()" [disabled]="!newProject.title">Créer le projet</button>
+    </div>
+  </div>
+</div>

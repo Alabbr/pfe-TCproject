@@ -30,6 +30,7 @@ public class ChatController {
     private final UserPresenceService userPresenceService;
     private final CloudinaryService cloudinaryService;
 
+    // Gère l'upload de fichiers joints (images ou autres) dans le chat via Cloudinary
     @PostMapping("/api/chat/upload")
     public ResponseEntity<?> uploadAttachment(@RequestParam("file") MultipartFile file) {
         try {
@@ -44,6 +45,7 @@ public class ChatController {
         }
     }
 
+    // Reçoit un message via WebSocket, l'enregistre et le diffuse au canal ou à l'utilisateur ciblé
     @MessageMapping("/chat.sendMessage")
     public void sendMessage(@Payload ChatMessageDto chatMessage, java.security.Principal principal) {
         System.out.println("Received message payload: " + chatMessage);
@@ -90,6 +92,7 @@ public class ChatController {
     }
 
     // ---- Edit Message ----
+    // Modifie le contenu d'un message existant via WebSocket et diffuse la mise à jour
     @MessageMapping("/chat.editMessage")
     public void editMessage(@Payload Map<String, Object> payload, java.security.Principal principal) {
         if (principal instanceof UsernamePasswordAuthenticationToken auth) {
@@ -112,6 +115,7 @@ public class ChatController {
     }
 
     // ---- Mark as Read ----
+    // Marque les messages comme lus pour un expéditeur donné via WebSocket et notifie cet expéditeur
     @MessageMapping("/chat.markAsRead")
     public void markAsRead(@Payload Map<String, Object> payload, java.security.Principal principal) {
         if (principal instanceof UsernamePasswordAuthenticationToken auth) {
@@ -136,6 +140,7 @@ public class ChatController {
     }
 
     // ---- React to Message ----
+    // Ajoute ou retire une réaction (emoji) sur un message via WebSocket et diffuse la mise à jour
     @MessageMapping("/chat.react")
     public void reactToMessage(@Payload Map<String, Object> payload, java.security.Principal principal) {
         if (principal instanceof UsernamePasswordAuthenticationToken auth) {
@@ -160,16 +165,19 @@ public class ChatController {
         }
     }
 
+    // Retourne l'historique complet des messages pour un canal spécifique
     @GetMapping("/api/chat/channel/{channelId}")
     public ResponseEntity<List<ChatMessageDto>> getChannelMessages(@PathVariable String channelId) {
         return ResponseEntity.ok(chatMessageService.getChannelMessages(channelId));
     }
 
+    // Retourne l'historique des messages privés échangés entre deux utilisateurs
     @GetMapping("/api/chat/direct/{userId1}/{userId2}")
     public ResponseEntity<List<ChatMessageDto>> getDirectMessages(@PathVariable Long userId1, @PathVariable Long userId2) {
         return ResponseEntity.ok(chatMessageService.getDirectMessages(userId1, userId2));
     }
 
+    // Retourne la liste des emails des utilisateurs actuellement connectés (en ligne)
     @GetMapping("/api/chat/presence")
     public ResponseEntity<Set<String>> getOnlineUsers() {
         return ResponseEntity.ok(userPresenceService.getOnlineUsers());
