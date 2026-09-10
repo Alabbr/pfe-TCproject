@@ -14,7 +14,7 @@ export interface GlobalAnnouncement {
   providedIn: 'root'
 })
 export class AnnouncementService {
-  private apiUrl = 'http://localhost:8080/api/announcements';
+  private apiUrl = '/api/announcements';
 
   constructor(private http: HttpClient) {}
 

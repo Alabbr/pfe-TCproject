@@ -7,7 +7,7 @@ import { AuthResponse } from '../models/auth.model';
   providedIn: 'root'
 })
 export class AuthService {
-  private readonly API_URL = 'http://localhost:8080/api/auth';
+  private readonly API_URL = '/api/auth';
   private readonly TOKEN_KEY = 'tc_hub_token';
   private readonly USER_KEY = 'tc_hub_user';
 
@@ -83,6 +83,14 @@ export class AuthService {
     const user = this.getCurrentUser();
     if (!user) return false;
     return roles.includes(user.role);
+  }
+
+  // Vérifie si l'utilisateur possède une permission spécifique
+  hasPermission(permission: string): boolean {
+    const user = this.getCurrentUser();
+    if (!user) return false;
+    if (user.role === 'SUPER_ADMIN' || user.role === 'DIRECTEUR_GENERAL') return true;
+    return user.permissions?.includes(permission) ?? false;
   }
 
   // Récupère les données utilisateur depuis le localStorage

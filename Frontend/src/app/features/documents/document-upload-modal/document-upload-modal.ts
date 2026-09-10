@@ -4,11 +4,12 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { DocumentService } from '../../../core/services/document.service';
 import { UserService } from '../../../core/services/user.service';
 import { DepartmentService } from '../../../core/services/department.service';
+import { RoleFormatPipe } from '../../../shared/pipes/role-format.pipe';
 
 @Component({
   selector: 'app-document-upload-modal',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, RoleFormatPipe],
   templateUrl: './document-upload-modal.html',
   styleUrl: './document-upload-modal.scss'
 })

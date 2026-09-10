@@ -47,6 +47,8 @@ export const routes: Routes = [
       },
       {
         path: 'knowledge-base',
+        canActivate: [permissionGuard],
+        data: { permissions: ['MANAGE_KNOWLEDGE_BASE'] },
         loadComponent: () => import('./features/rag/knowledge-base/knowledge-base').then(m => m.KnowledgeBaseComponent)
       },
       {
@@ -55,15 +57,25 @@ export const routes: Routes = [
       },
       {
         path: 'projects',
+        canActivate: [permissionGuard],
+        data: { permissions: ['VIEW_PROJECTS', 'MANAGE_PROJECTS'] },
         loadComponent: () => import('./features/projects/projects-list/projects-list.component').then(m => m.ProjectsListComponent)
       },
       {
         path: 'projects/:id',
+        canActivate: [permissionGuard],
+        data: { permissions: ['VIEW_PROJECTS', 'MANAGE_PROJECTS'] },
         loadComponent: () => import('./features/projects/project-detail/project-detail.component').then(m => m.ProjectDetailComponent)
       },
       {
         path: 'project-tasks',
+        canActivate: [permissionGuard],
+        data: { permissions: ['VIEW_PROJECTS', 'MANAGE_PROJECTS'] },
         loadComponent: () => import('./features/projects/my-tasks/my-tasks.component').then(m => m.MyTasksComponent)
+      },
+      {
+        path: 'billing-dashboard',
+        loadComponent: () => import('./features/billing/billing-dashboard/billing-dashboard').then(m => m.BillingDashboardComponent)
       },
       // Other routes will be added here
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }

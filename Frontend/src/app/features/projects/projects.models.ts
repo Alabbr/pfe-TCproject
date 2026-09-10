@@ -22,10 +22,13 @@ export interface Task {
   description: string;
   status: 'A_FAIRE' | 'EN_COURS' | 'EN_VALIDATION' | 'TERMINE';
   priority: 'BASSE' | 'NORMALE' | 'HAUTE' | 'URGENTE';
-  deadline: string;
+  startDate?: string;
+  deadline?: string;
   projectId: number;
   assignee?: UserBasicInfo;
   reporter: UserBasicInfo;
+  progress?: number;
+  validationAttachment?: string;
 }
 
 export interface TaskHistory {

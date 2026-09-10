@@ -31,7 +31,7 @@ export interface ChatMessageDto {
 })
 export class ChatService {
   private client: Client;
-  private backendUrl = 'http://localhost:8080';
+  private backendUrl = '';
   public zone: NgZone;
   
   // Observables for real-time updates

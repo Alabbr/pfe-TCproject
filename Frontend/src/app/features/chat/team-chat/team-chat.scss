@@ -401,7 +401,7 @@
     height: 40px;
   }
   
-  .attach-btn, .emoji-btn {
+  .attach-btn, .emoji-btn, .mic-btn {
     color: var(--color-text-muted);
     width: 36px;
     height: 36px;
@@ -413,6 +413,12 @@
     &:hover {
       background-color: var(--color-bg-surface);
       color: var(--color-text-main);
+    }
+  }
+
+  .mic-btn {
+    &:hover {
+      color: var(--color-danger);
     }
   }
   
@@ -435,6 +441,66 @@
       font-size: 18px;
     }
   }
+
+  .recording-ui {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0 var(--spacing-2);
+
+    .recording-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--color-danger);
+      font-weight: 500;
+
+      .recording-dot {
+        font-size: 14px;
+        animation: pulseRecord 1s infinite;
+      }
+    }
+
+    .recording-actions {
+      display: flex;
+      gap: 8px;
+
+      .cancel-record-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        color: var(--color-text-muted);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        &:hover {
+          background-color: rgba(239, 68, 68, 0.1);
+          color: var(--color-danger);
+        }
+      }
+
+      .stop-record-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background-color: var(--color-primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        &:hover {
+          background-color: var(--color-primary-dark);
+        }
+      }
+    }
+  }
+}
+
+@keyframes pulseRecord {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+  100% { opacity: 1; transform: scale(1); }
 }
 
 /* =========================================

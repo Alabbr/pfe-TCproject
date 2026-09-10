@@ -1,11 +1,14 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ProjectService } from '../project.service';
 import { UserService } from '../../../core/services/user.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { Project, Task, ProjectDocument, TaskHistory } from '../projects.models';
 import { ToastService } from '../../../shared/services/toast';
+import { NotificationService } from '../../../core/services/notification.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-project-detail',
@@ -14,7 +17,7 @@ import { ToastService } from '../../../shared/services/toast';
   templateUrl: './project-detail.component.html',
   styleUrl: './project-detail.component.scss'
 })
-export class ProjectDetailComponent implements OnInit {
+export class ProjectDetailComponent implements OnInit, OnDestroy {
   project!: Project;
   tasks: Task[] = [];
   documents: ProjectDocument[] = [];
@@ -33,6 +36,7 @@ export class ProjectDetailComponent implements OnInit {
     title: '',
     description: '',
     priority: 'NORMALE',
+    startDate: '',
     deadline: '',
     assigneeId: null as number | null
   };
@@ -53,13 +57,32 @@ export class ProjectDetailComponent implements OnInit {
     memberIds: [] as number[]
   };
 
+  showTaskDetailsModal = false;
+  selectedTaskDetails: Task | null = null;
+  private notifSub!: Subscription;
+
+
   constructor(
     private route: ActivatedRoute,
     private projectService: ProjectService,
     private toast: ToastService,
     private router: Router,
-    private userService: UserService
+    private userService: UserService,
+    public authService: AuthService,
+    private notificationService: NotificationService
   ) {}
+
+  get isProjectCreator(): boolean {
+    if (!this.project || !this.project.createdBy) return false;
+    const currentUser = this.authService.getCurrentUser();
+    return currentUser ? this.project.createdBy.id === currentUser.userId : false;
+  }
+
+  get canManageProject(): boolean {
+    return this.authService.hasRole(['SUPER_ADMIN', 'DIRECTEUR_GENERAL']) ||
+           this.authService.hasPermission('MANAGE_PROJECTS') ||
+           this.isProjectCreator;
+  }
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
@@ -67,6 +90,18 @@ export class ProjectDetailComponent implements OnInit {
       this.loadProject(Number(id));
       this.loadTasks(Number(id));
       this.loadDocuments(Number(id));
+      
+      this.notifSub = this.notificationService.events$.subscribe(event => {
+        if (event.type === 'TASK_UPDATED' || event.type === 'TASK_REVIEW_REQUESTED') {
+          this.loadTasks(Number(id));
+        }
+      });
+    }
+  }
+
+  ngOnDestroy() {
+    if (this.notifSub) {
+      this.notifSub.unsubscribe();
     }
   }
 
@@ -104,12 +139,15 @@ export class ProjectDetailComponent implements OnInit {
     if (!payload.deadline) {
       delete payload.deadline; // Don't send empty string to backend
     }
+    if (!payload.startDate) {
+      delete payload.startDate;
+    }
     this.projectService.createTask(payload).subscribe({
       next: () => {
         this.toast.success('Succès', 'Mission ajoutée');
         this.showCreateTaskModal = false;
         this.loadTasks(this.project.id);
-        this.newTask = { title: '', description: '', priority: 'NORMALE', deadline: '', assigneeId: null };
+        this.newTask = { title: '', description: '', priority: 'NORMALE', startDate: '', deadline: '', assigneeId: null };
       },
       error: (err) => {
         console.error(err);
@@ -118,6 +156,7 @@ export class ProjectDetailComponent implements OnInit {
     });
   }
 
+
   openStatusCommentModal(task: Task, newStatus: string) {
     this.pendingTaskToChange = task;
     this.pendingStatusChange = newStatus;
@@ -125,22 +164,47 @@ export class ProjectDetailComponent implements OnInit {
     this.showStatusCommentModal = true;
   }
 
+  validationFile: File | null = null;
+
   closeStatusCommentModal() {
     this.showStatusCommentModal = false;
     this.pendingTaskToChange = null;
     this.pendingStatusChange = '';
     this.statusComment = '';
+    this.validationFile = null;
+  }
+
+  onValidationFileSelected(event: any) {
+    this.validationFile = event.target.files[0] || null;
   }
 
   confirmStatusChange() {
     if (!this.pendingTaskToChange || !this.pendingStatusChange) return;
 
-    this.projectService.updateTaskStatus(this.pendingTaskToChange.id, this.pendingStatusChange, this.statusComment).subscribe({
-      next: () => {
-        this.toast.success('Succès', 'Statut mis à jour');
-        this.closeStatusCommentModal();
-        this.loadTasks(this.project.id);
-      },
+    if (this.pendingStatusChange === 'EN_VALIDATION') {
+      this.projectService.requestValidation(this.pendingTaskToChange.id, this.validationFile, this.statusComment).subscribe({
+        next: () => {
+          this.toast.success('Succès', 'Demande de validation envoyée');
+          this.closeStatusCommentModal();
+          this.loadTasks(this.project.id);
+        },
+        error: (err) => this.toast.error('Erreur', err.error?.error || 'Erreur inconnue')
+      });
+    } else {
+      this.projectService.updateTaskStatus(this.pendingTaskToChange.id, this.pendingStatusChange, this.statusComment).subscribe({
+        next: () => {
+          this.toast.success('Succès', 'Statut mis à jour');
+          this.closeStatusCommentModal();
+          this.loadTasks(this.project.id);
+        },
+        error: (err) => this.toast.error('Erreur', err.error?.error || 'Erreur inconnue')
+      });
+    }
+  }
+
+  updateProgress(task: Task, newProgress: number) {
+    this.projectService.updateTaskProgress(task.id, newProgress).subscribe({
+      next: () => this.toast.success('Succès', 'Avancement mis à jour'),
       error: (err) => this.toast.error('Erreur', err.error?.error || 'Erreur inconnue')
     });
   }
@@ -158,7 +222,21 @@ export class ProjectDetailComponent implements OnInit {
   }
 
   downloadDoc(id: number) {
-    window.open(`http://localhost:8080/api/projects/documents/download/${id}`, '_blank');
+    window.open(`/api/projects/documents/download/${id}`, '_blank');
+  }
+
+  viewDoc(id: number) {
+    window.open(`/api/projects/documents/view/${id}`, '_blank');
+  }
+
+  openTaskDetailsModal(task: Task) {
+    this.selectedTaskDetails = task;
+    this.showTaskDetailsModal = true;
+  }
+
+  closeTaskDetailsModal() {
+    this.showTaskDetailsModal = false;
+    this.selectedTaskDetails = null;
   }
 
   // Traçabilité

@@ -18,7 +18,7 @@ export class PrivateInboxModalComponent implements OnInit {
   sentItems: DocumentInboxResponse[] = [];
   isLoading = true;
   activeTab: 'inbox' | 'sent' = 'inbox';
-  apiUrl = 'http://localhost:8080';
+  apiUrl = '';
 
   constructor(private documentService: DocumentService) {}
 

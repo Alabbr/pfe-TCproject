@@ -1,0 +1,301 @@
+<div class="billing-container" id="pdfContent">
+  <header class="page-header">
+    <div class="header-content">
+      <h1>Facturation IA</h1>
+      <p class="subtitle">Tableau de bord de suivi de la facturation</p>
+    </div>
+    <div class="header-actions" data-html2canvas-ignore="true">
+      <button class="btn-refresh" (click)="fetchData()" [disabled]="loadingPdf">
+        <span class="material-symbols-outlined">refresh</span>
+        Actualiser
+      </button>
+      <button class="btn-download" (click)="downloadPDF()" [disabled]="loadingPdf || loading || error || !stats" style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; transition: all 0.2s ease; background: #3b82f6; color: white;">
+        <span class="material-symbols-outlined" *ngIf="!loadingPdf">picture_as_pdf</span>
+        <div class="spinner-small" *ngIf="loadingPdf" style="width: 16px; height: 16px; border-color: white transparent transparent transparent;"></div>
+        {{ loadingPdf ? 'Génération...' : 'Télécharger PDF' }}
+      </button>
+    </div>
+  </header>
+
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Chargement des données de facturation...</p>
+  </div>
+
+  <div class="error-state" *ngIf="error">
+    <span class="material-symbols-outlined">error</span>
+    <p>Erreur lors du chargement des données. Veuillez réessayer.</p>
+    <button class="btn-retry" (click)="fetchData()">Réessayer</button>
+  </div>
+
+  <div class="dashboard-content" *ngIf="!loading && !error && stats">
+    
+    <!-- Top KPIs -->
+    <div class="kpi-grid">
+      <!-- Suivi Manipulation -->
+      <div class="kpi-card highlight-card">
+        <div class="kpi-header">
+          <span class="material-symbols-outlined icon-blue">analytics</span>
+          <h3>Suivi manipulation du mois</h3>
+        </div>
+        <div class="kpi-body">
+          <div class="kpi-row">
+            <span class="label">Génération des tickets :</span>
+            <span class="badge badge-success">{{ stats.suiviManipulation.generationTickets }}</span>
+          </div>
+          <div class="kpi-row">
+            <span class="label">Tickets ponctuels :</span>
+            <span class="value">{{ stats.suiviManipulation.ticketsPonctuelsNbr }} <small>({{ stats.suiviManipulation.ticketsPonctuelsMdt | number:'1.1-1' }} mDT)</small></span>
+          </div>
+          <div class="kpi-row">
+            <span class="label">Comptabilisation factures :</span>
+            <span class="badge badge-success">{{ stats.suiviManipulation.comptabilisationFactures }}</span>
+          </div>
+          <div class="kpi-row highlight-row">
+            <span class="label">Montant tickets non facturé :</span>
+            <span class="value bold red">{{ stats.suiviManipulation.montantTicketsNonFacture | number:'1.1-1' }} mDT</span>
+          </div>
+        </div>
+        <div class="kpi-footer">
+          <small>MAJ: {{ stats.suiviManipulation.lastRefresh }}</small>
+        </div>
+      </div>
+
+      <!-- Appels Fonds OST -->
+      <div class="kpi-card highlight-card">
+        <div class="kpi-header">
+          <span class="material-symbols-outlined icon-purple">account_balance_wallet</span>
+          <h3>Appels de fonds sur les OST</h3>
+        </div>
+        <div class="kpi-body center-content">
+          <div class="big-value">{{ stats.appelsFondsOst.totalNombreOst }}</div>
+          <div class="sub-label">Total du nombre des OST</div>
+        </div>
+      </div>
+
+      <!-- Factures non recouvrées -->
+      <div class="kpi-card warning-card">
+        <div class="kpi-header">
+          <span class="material-symbols-outlined icon-orange">warning</span>
+          <h3>Factures non recouvrées (> 6 MOIS)</h3>
+        </div>
+        <div class="kpi-body">
+          <div class="stats-row">
+            <div class="stat-box">
+              <span class="stat-value red">{{ stats.facturesNonRecouvrees.totalFactures | number:'1.2-2' }}</span>
+              <span class="stat-label">Total factures</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-value">{{ stats.facturesNonRecouvrees.countFactures }}</span>
+              <span class="stat-label">Nombre</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-value green">{{ stats.facturesNonRecouvrees.totalRecouvres | number:'1.2-2' }}</span>
+              <span class="stat-label">Total recouvrés</span>
+            </div>
+          </div>
+          <div class="example-text">{{ stats.facturesNonRecouvrees.exampleText }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Predictive Agent Section -->
+    <div class="prediction-section card">
+      <div class="card-header predictive-header">
+        <div class="header-title">
+          <span class="material-symbols-outlined icon-magic">science</span>
+          <h3>🔮 Agent de Prédiction IA (Machine Learning)</h3>
+        </div>
+        <div class="prediction-year-badge" *ngIf="!loadingPrediction && !errorPrediction && prediction">
+          Prévisions pour l'année {{ prediction.nextYear }}
+        </div>
+      </div>
+      
+      <!-- Prediction Loading -->
+      <div class="prediction-loading" *ngIf="loadingPrediction">
+        <div class="spinner-small"></div>
+        <p>L'Agent IA s'entraîne sur l'historique et calcule les tendances financières...</p>
+      </div>
+
+      <!-- Prediction Error -->
+      <div class="prediction-error" *ngIf="errorPrediction">
+        <span class="material-symbols-outlined">warning</span>
+        <p>Impossible de générer les prédictions par IA pour le moment.</p>
+      </div>
+
+      <!-- Prediction Success Content -->
+      <div class="prediction-content-grid" *ngIf="!loadingPrediction && !errorPrediction && prediction">
+        <!-- Predicted Cards -->
+        <div class="pred-kpi-grid">
+          <div class="pred-card">
+            <span class="pred-label">CA Global Prévu</span>
+            <span class="pred-value">{{ prediction.predictedGlobal | number:'1.1-1' }} mDT</span>
+            <span class="pred-evolution" [class.positive]="prediction.evolutionGlobalPercentage >= 0" [class.negative]="prediction.evolutionGlobalPercentage < 0">
+              <span class="material-symbols-outlined">{{ prediction.evolutionGlobalPercentage >= 0 ? 'arrow_upward' : 'arrow_downward' }}</span>
+              {{ prediction.evolutionGlobalPercentage | number:'1.1-2' }}% (vs {{ prediction.nextYear - 1 }})
+            </span>
+          </div>
+
+          <div class="pred-card">
+            <span class="pred-label">Prestation Stock</span>
+            <span class="pred-value">{{ prediction.predictedStock | number:'1.1-1' }} mDT</span>
+            <span class="pred-evolution" [class.positive]="prediction.evolutionStockPercentage >= 0" [class.negative]="prediction.evolutionStockPercentage < 0">
+              <span class="material-symbols-outlined">{{ prediction.evolutionStockPercentage >= 0 ? 'arrow_upward' : 'arrow_downward' }}</span>
+              {{ prediction.evolutionStockPercentage | number:'1.1-2' }}%
+            </span>
+          </div>
+
+          <div class="pred-card">
+            <span class="pred-label">Prestation Flux</span>
+            <span class="pred-value">{{ prediction.predictedFlux | number:'1.1-1' }} mDT</span>
+            <span class="pred-evolution" [class.positive]="prediction.evolutionFluxPercentage >= 0" [class.negative]="prediction.evolutionFluxPercentage < 0">
+              <span class="material-symbols-outlined">{{ prediction.evolutionFluxPercentage >= 0 ? 'arrow_upward' : 'arrow_downward' }}</span>
+              {{ prediction.evolutionFluxPercentage | number:'1.1-2' }}%
+            </span>
+          </div>
+
+          <div class="pred-card">
+            <span class="pred-label">Prestation Ponctuel</span>
+            <span class="pred-value">{{ prediction.predictedPonctuel | number:'1.1-1' }} mDT</span>
+            <span class="pred-evolution" [class.positive]="prediction.evolutionPonctuelPercentage >= 0" [class.negative]="prediction.evolutionPonctuelPercentage < 0">
+              <span class="material-symbols-outlined">{{ prediction.evolutionPonctuelPercentage >= 0 ? 'arrow_upward' : 'arrow_downward' }}</span>
+              {{ prediction.evolutionPonctuelPercentage | number:'1.1-2' }}%
+            </span>
+          </div>
+        </div>
+
+        <!-- Chart and Analysis Row -->
+        <div class="pred-details-row">
+          <!-- Regression Chart -->
+          <div class="pred-chart-box">
+            <h4>Courbe d'Évolution & Tendance Régression</h4>
+            <div echarts [options]="predictionChartOption" class="echart-prediction-container"></div>
+          </div>
+
+          <!-- AI Analysis Box -->
+          <div class="pred-analysis-box">
+            <div class="analysis-header">
+              <span class="material-symbols-outlined">psychology</span>
+              <h4>Analyse Cognitive de l'Agent</h4>
+            </div>
+            <div class="analysis-text">
+              <p>{{ prediction.aiAnalysis }}</p>
+            </div>
+
+            <!-- Anomalies List -->
+            <div class="anomalies-section" *ngIf="prediction.anomalies && prediction.anomalies.length > 0">
+              <div class="anomalies-header">
+                <span class="material-symbols-outlined icon-alert">report_problem</span>
+                <h5>Alertes & Anomalies Détectées</h5>
+              </div>
+              <ul class="anomalies-list">
+                <li *ngFor="let anomaly of prediction.anomalies">
+                  {{ anomaly }}
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="charts-grid">
+      <!-- TCN -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3>TCN (en mDT)</h3>
+          <div class="chart-badges">
+            <span class="badge badge-warning">{{ stats.tcnData.status }}</span>
+            <span class="badge badge-blue">Trim en cours: {{ stats.tcnData.trimestreEncours | number:'1.1-1' }}</span>
+            <span class="badge badge-purple">Moy Mens: {{ stats.tcnData.moyMensuelle | number:'1.1-1' }}</span>
+          </div>
+        </div>
+        <div class="chart-body">
+          <div echarts [options]="tcnChartOption" class="echart-container"></div>
+        </div>
+      </div>
+
+      <!-- REPO ESPECE -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3>REPO ESPECE (en mDT)</h3>
+          <div class="chart-badges">
+            <span class="badge badge-warning">{{ stats.repoEspeceData.status }}</span>
+            <span class="badge badge-blue">Trim en cours: {{ stats.repoEspeceData.trimestreEncours | number:'1.1-1' }}</span>
+            <span class="badge badge-purple">Moy Mens: {{ stats.repoEspeceData.moyMensuelle | number:'1.1-1' }}</span>
+          </div>
+        </div>
+        <div class="chart-body">
+          <div echarts [options]="repoChartOption" class="echart-container"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Section: Chiffre Affaires & Top 10 -->
+    <div class="bottom-grid">
+      <!-- Chiffre Affaires -->
+      <div class="ca-card">
+        <div class="card-header">
+          <h3>Chiffre d'affaires en mDT (HT)</h3>
+        </div>
+        <div class="ca-content">
+          <div class="ca-table-container">
+            <table class="modern-table">
+              <thead>
+                <tr>
+                  <th>Chiffre d'Affaire</th>
+                  <th>Année-1</th>
+                  <th>Année en cours</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let row of stats.chiffreAffaires.revenusTable" [class.total-row]="row.type === 'TOTAL'">
+                  <td>{{ row.type }}</td>
+                  <td>{{ row.anneePrecedente | number:'1.1-1' }}</td>
+                  <td>{{ row.anneeCours | number:'1.1-1' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="ca-pie-container">
+            <h4>Répartition</h4>
+            <div echarts [options]="caPieOption" class="echart-pie"></div>
+          </div>
+        </div>
+        <div class="ca-summary">
+          <div class="summary-box">
+            <span class="label">Montant Facturé HT</span>
+            <span class="value blue">{{ stats.chiffreAffaires.anneeEncours.montantFactureHt | number:'1.1-1' }}</span>
+          </div>
+          <div class="summary-box">
+            <span class="label">Montant Facturé TTC</span>
+            <span class="value dark-blue">{{ stats.chiffreAffaires.anneeEncours.montantFactureTtc | number:'1.1-1' }}</span>
+          </div>
+          <div class="summary-box">
+            <span class="label">Montant Réglé TTC</span>
+            <span class="value green">{{ stats.chiffreAffaires.anneeEncours.montantRegleTtc | number:'1.1-1' }}</span>
+          </div>
+          <div class="summary-box">
+            <span class="label">Montant NON Réglé HT</span>
+            <span class="value red">{{ stats.chiffreAffaires.anneeEncours.montantNonRegleHt | number:'1.1-1' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top 10 -->
+      <div class="top10-card">
+        <div class="card-header">
+          <h3>Top 10 des participants (Recouvrement)</h3>
+        </div>
+        <div class="top10-list">
+          <div class="top10-item" *ngFor="let participant of stats.top10Participants; let i = index">
+            <div class="rank">{{ i + 1 }}</div>
+            <div class="name">{{ participant.nom }}</div>
+            <div class="amount">{{ participant.montant | number:'1.1-1' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

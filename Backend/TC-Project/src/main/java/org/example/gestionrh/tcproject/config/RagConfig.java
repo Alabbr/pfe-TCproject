@@ -15,7 +15,7 @@ import java.nio.file.Paths;
 @Configuration
 public class RagConfig {
 
-    private static final String STORE_PATH = "vector_store.json";
+    private static final String STORE_PATH = "/app/data/vector_store.json";
 
     /**
      * Local embedding model — converts text to vectors.

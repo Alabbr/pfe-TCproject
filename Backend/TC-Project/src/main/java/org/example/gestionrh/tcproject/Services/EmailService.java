@@ -32,7 +32,7 @@ public class EmailService {
                     "<p>Il est actuellement <span style='color: #d9534f; font-weight: bold;'>en attente d'affectation</span>.</p>" +
                     "<p>Veuillez vous connecter à votre <strong>Espace Chef</strong> pour lui attribuer un poste de travail (Gestion).</p>" +
                     "<br>" +
-                    "<a href='http://localhost:4200/login' style='display: inline-block; background-color: #1A4A8A; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;'>Accéder à mon espace</a>" +
+                    "<a href='http://192.168.100.112/login' style='display: inline-block; background-color: #1A4A8A; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;'>Accéder à mon espace</a>" +
                     "</div>" +
                     "<div style='background-color: #f9f9f9; padding: 15px; text-align: center; font-size: 12px; color: #777;'>" +
                     "&copy; 2024 Tunisie Clearing. Tous droits réservés." +
@@ -70,7 +70,7 @@ public class EmailService {
                     "</div>" +
                     "<p style='color: #777; font-size: 13px;'>⚠️ Nous vous recommandons de changer votre mot de passe dès votre première connexion.</p>" +
                     "<br>" +
-                    "<a href='http://localhost:4200/login' style='display: inline-block; background-color: #1A4A8A; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold;'>Se connecter →</a>" +
+                    "<a href='http://192.168.100.112/login' style='display: inline-block; background-color: #1A4A8A; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold;'>Se connecter →</a>" +
                     "</div>" +
                     "<div style='background-color: #f9f9f9; padding: 15px; text-align: center; font-size: 12px; color: #777;'>" +
                     "&copy; 2024 Tunisie Clearing. Tous droits réservés." +

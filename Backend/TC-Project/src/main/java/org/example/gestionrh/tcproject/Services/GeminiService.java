@@ -1,5 +1,6 @@
 package org.example.gestionrh.tcproject.Services;
 
+
 import okhttp3.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -17,7 +18,7 @@ public class GeminiService {
     @Value("${groq.api.key}")
     private String apiKey;
 
-    @Value("${groq.model.name:llama-3.3-70b-versatile}")
+    @Value("${groq.model.name:openai/gpt-oss-120b}")
     private String modelName;
 
     private static final String GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
@@ -31,16 +32,44 @@ public class GeminiService {
 
     private static final String RAG_SYSTEM_PROMPT =
             "Tu es l'assistant IA officiel de Tunisie Clearing (TC Hub). " +
-            "Voici tes règles:\n" +
-            "1. Si l'utilisateur te salue (bonjour, hi, salut, etc.), réponds poliment et propose ton aide.\n" +
-            "2. Pour les questions, utilise le contexte fourni ci-dessous en priorité.\n" +
-            "3. Cite les sources quand c'est possible.\n" +
-            "4. Si l'information n'est pas explicite dans le contexte, essaie de donner une réponse utile et logique à partir de tes connaissances, tout en précisant que l'information n'a pas été trouvée dans les documents internes.\n" +
-            "5. Réponds en français, de manière professionnelle et claire.\n" +
-            "6. Si le contexte contient des tableaux, formate-les proprement dans ta réponse.";
+            "Voici tes règles strictes:\n" +
+            "1. Sois CLAIR, DIRECT et CONCIS. Ne fais pas de longs résumés inutiles et évite le verbiage.\n" +
+            "2. Parle naturellement comme un collègue expert.\n" +
+            "3. Utilise le contexte fourni pour répondre. Si la réponse n'y figure pas, dis-le simplement sans t'étaler.\n" +
+            "4. Ne crée pas de tableaux complexes ou de formatage lourd (comme des balises HTML) sauf si c'est absolument nécessaire pour la clarté.\n" +
+            "5. Réponds en français de manière professionnelle.";
 
     public String askWithContext(String question, String context) throws IOException {
         return askWithContext(question, context, null);
+    }
+
+    // Version brute pour envoyer des prompts personnalisés sans le RAG system prompt
+    public String askRaw(String systemPrompt, String userMessage) throws IOException {
+        String jsonBody = "{" +
+                "\"model\":\"" + modelName + "\"," +
+                "\"messages\":[" +
+                "{\"role\":\"system\",\"content\":\"" + escapeJson(systemPrompt) + "\"}," +
+                "{\"role\":\"user\",\"content\":\"" + escapeJson(userMessage) + "\"}" +
+                "]," +
+                "\"temperature\":0.2," +
+                "\"max_tokens\":2048" +
+                "}";
+
+        Request request = new Request.Builder()
+                .url(GROQ_API_URL)
+                .addHeader("Authorization", "Bearer " + apiKey)
+                .addHeader("Content-Type", "application/json")
+                .post(RequestBody.create(jsonBody, MediaType.parse("application/json")))
+                .build();
+
+        try (Response response = httpClient.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                String errBody = response.body() != null ? response.body().string() : "unknown error";
+                throw new IOException("Groq API error " + response.code() + ": " + errBody);
+            }
+            String responseBody = response.body().string();
+            return extractContentFromResponse(responseBody);
+        }
     }
 
     // Envoie la question + le contexte RAG au LLM Groq/Llama 3.3 avec l'historique
@@ -119,32 +148,18 @@ public class GeminiService {
 
     /**
      * Extracts the assistant's response content from OpenAI-compatible JSON.
-     * Looks for: "content":"..." inside the choices array.
      */
     private String extractContentFromResponse(String json) {
-        // Find "content":" pattern (the assistant's message)
-        // We need to find the content inside choices[0].message.content
         String key = "\"content\":";
-        
-        // Skip the first "content" occurrence (which is the system/user message echo)
-        // and find the one inside "message" object of choices
         int choicesIdx = json.indexOf("\"choices\"");
-        if (choicesIdx == -1) {
-            return "Désolé, je n'ai pas pu générer de réponse.";
-        }
-
+        if (choicesIdx == -1) return "Désolé, je n'ai pas pu générer de réponse.";
+        
         int index = json.indexOf(key, choicesIdx);
-        if (index == -1) {
-            return "Désolé, je n'ai pas pu générer de réponse.";
-        }
-
-        // Find the opening quote of the value
+        if (index == -1) return "Désolé, je n'ai pas pu générer de réponse.";
+        
         int startQuote = json.indexOf("\"", index + key.length());
-        if (startQuote == -1) {
-            return "Désolé, je n'ai pas pu générer de réponse.";
-        }
-
-        // Parse the JSON string value handling escape sequences
+        if (startQuote == -1) return "Désolé, je n'ai pas pu générer de réponse.";
+        
         StringBuilder extracted = new StringBuilder();
         boolean escaped = false;
         for (int i = startQuote + 1; i < json.length(); i++) {
@@ -156,6 +171,19 @@ public class GeminiService {
                     case 't': extracted.append('\t'); break;
                     case '"': extracted.append('"'); break;
                     case '\\': extracted.append('\\'); break;
+                    case 'u':
+                        if (i + 4 < json.length()) {
+                            String hex = json.substring(i + 1, i + 5);
+                            try {
+                                extracted.append((char) Integer.parseInt(hex, 16));
+                                i += 4;
+                            } catch (NumberFormatException e) {
+                                extracted.append("\\u");
+                            }
+                        } else {
+                            extracted.append("\\u");
+                        }
+                        break;
                     default: extracted.append('\\').append(c); break;
                 }
                 escaped = false;

@@ -103,7 +103,7 @@
                          (change)="toggleRecipient(user.id, $event)">
                   <span class="checkbox-label">
                     {{ user.firstName }} {{ user.lastName }}
-                    <span class="user-role-badge badge badge-primary ml-2">{{ user.jobPositionName || user.role }}</span>
+                    <span class="user-role-badge badge badge-primary ml-2">{{ user.jobPositionName || (user.role | roleFormat) }}</span>
                   </span>
                 </label>
               </div>

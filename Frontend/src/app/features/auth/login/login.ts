@@ -40,7 +40,9 @@ export class Login implements OnInit {
           this.backgroundUrl = setting.value;
         }
       },
-      error: (err) => console.error('Could not load background setting', err)
+      error: (err) => {
+        console.error('Could not load background setting', err);
+      }
     });
 
     this.loginForm = this.fb.group({
@@ -72,9 +74,7 @@ export class Login implements OnInit {
       },
       error: (err) => {
         this.isLoading = false;
-        this.errorMessage = err.status === 401 
-          ? 'Identifiant ou mot de passe incorrect' 
-          : 'Une erreur est survenue lors de la connexion';
+        this.errorMessage = 'Adresse email ou mot de passe incorrect';
       }
     });
   }

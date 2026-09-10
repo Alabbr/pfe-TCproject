@@ -41,7 +41,7 @@ export interface SuperAdminStats {
   providedIn: 'root'
 })
 export class SuperAdminDashboardService {
-  private apiUrl = 'http://localhost:8080/api/dashboard/super-admin';
+  private apiUrl = '/api/dashboard/super-admin';
 
   constructor(private http: HttpClient) {}
 

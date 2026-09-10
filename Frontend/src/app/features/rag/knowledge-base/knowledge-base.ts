@@ -64,7 +64,7 @@ export class KnowledgeBaseComponent {
     const formData = new FormData();
     formData.append('file', this.selectedFile);
 
-    this.http.post<{message: string}>('http://localhost:8080/api/rag/upload', formData).subscribe({
+    this.http.post<{message: string}>('/api/rag/upload', formData).subscribe({
       next: (response) => {
         this.isUploading = false;
         this.selectedFile = null;
@@ -85,7 +85,7 @@ export class KnowledgeBaseComponent {
   triggerBulkImport() {
     if (confirm('Voulez-vous vraiment lancer l\'importation en masse du dossier RAG pdf ? Cela peut prendre plusieurs minutes.')) {
       this.isBulkImporting = true;
-      this.http.post<{message: string}>('http://localhost:8080/api/rag/bulk-import', {}).subscribe({
+      this.http.post<{message: string}>('/api/rag/bulk-import', {}).subscribe({
         next: (response) => {
           this.isBulkImporting = false;
           this.toastService.success('Importation réussie', response.message);

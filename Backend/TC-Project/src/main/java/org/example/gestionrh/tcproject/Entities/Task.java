@@ -36,7 +36,15 @@ public class Task {
     @Builder.Default
     private TaskPriority priority = TaskPriority.NORMALE;
 
+    private LocalDate startDate;
     private LocalDate deadline;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer progress = 0;
+
+    @Column(length = 1000)
+    private String validationAttachment;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)

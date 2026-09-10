@@ -11,7 +11,7 @@ export interface RolePermission {
   providedIn: 'root'
 })
 export class RolePermissionService {
-  private apiUrl = 'http://localhost:8080/api/roles';
+  private apiUrl = '/api/roles';
 
   constructor(private http: HttpClient) { }
 

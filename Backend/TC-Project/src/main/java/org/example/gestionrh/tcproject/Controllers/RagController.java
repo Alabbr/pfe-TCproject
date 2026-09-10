@@ -121,7 +121,7 @@ public class RagController {
     // Importe en masse tous les PDFs du dossier "RAG pdf" (parcourt récursivement les sous-dossiers)
     @PostMapping("/bulk-import")
     public ResponseEntity<?> bulkImport() {
-        String folderPath = "C:\\Users\\sreou\\OneDrive\\Bureau\\pfe-project\\RAG pdf";
+        String folderPath = "/app/RAG_pdf";
         File folder = new File(folderPath);
         
         if (!folder.exists() || !folder.isDirectory()) {

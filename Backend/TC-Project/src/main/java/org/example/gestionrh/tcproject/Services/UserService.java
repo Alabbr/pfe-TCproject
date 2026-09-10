@@ -217,7 +217,9 @@ public class UserService {
                     org.example.gestionrh.tcproject.Entities.Permission.MANAGE_DOCUMENTS,
                     org.example.gestionrh.tcproject.Entities.Permission.USE_CHATBOT,
                     org.example.gestionrh.tcproject.Entities.Permission.VIEW_CHAT,
-                    org.example.gestionrh.tcproject.Entities.Permission.VIEW_BILLING
+                    org.example.gestionrh.tcproject.Entities.Permission.VIEW_BILLING,
+                    org.example.gestionrh.tcproject.Entities.Permission.VIEW_PROJECTS,
+                    org.example.gestionrh.tcproject.Entities.Permission.MANAGE_PROJECTS
             );
             // Filter out any non-allowed permissions
             permissions.removeIf(p -> !chefAllowed.contains(p));

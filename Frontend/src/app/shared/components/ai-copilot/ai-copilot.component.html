@@ -1,0 +1,50 @@
+<div class="copilot-container" [class.open]="isOpen">
+  <!-- Floating Button -->
+  <button class="copilot-btn" (click)="toggleOpen()" *ngIf="!isOpen">
+    <span class="material-symbols-outlined star-icon">auto_awesome</span>
+  </button>
+
+  <!-- Chat Window -->
+  <div class="copilot-window glass-panel" *ngIf="isOpen">
+    <div class="copilot-header">
+      <div class="header-left">
+        <span class="material-symbols-outlined">auto_awesome</span>
+        <h3>Agent IA</h3>
+      </div>
+      <button class="close-btn" (click)="close()">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <div class="copilot-body" #chatBody>
+      <div class="message" *ngFor="let msg of history" [ngClass]="msg.type">
+        <div class="avatar" *ngIf="msg.type === 'agent'">
+          <span class="material-symbols-outlined">smart_toy</span>
+        </div>
+        <div class="bubble">
+          {{ msg.text }}
+        </div>
+      </div>
+      
+      <div class="message agent typing" *ngIf="isProcessing">
+        <div class="avatar">
+          <span class="material-symbols-outlined">smart_toy</span>
+        </div>
+        <div class="bubble">
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="copilot-input">
+      <input type="text" #commandInput 
+             [(ngModel)]="command" 
+             (keyup.enter)="sendCommand()" 
+             placeholder="Demander une action..." 
+             [disabled]="isProcessing">
+      <button class="send-btn" (click)="sendCommand()" [disabled]="!command.trim() || isProcessing">
+        <span class="material-symbols-outlined">send</span>
+      </button>
+    </div>
+  </div>
+</div>

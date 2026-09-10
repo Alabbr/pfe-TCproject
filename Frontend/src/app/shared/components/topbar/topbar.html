@@ -1,13 +1,47 @@
 <header class="topbar">
   <div class="topbar-left">
-    <div class="search-bar">
+    <div class="search-bar" [class.search-active]="isSearchOpen">
       <span class="material-symbols-outlined search-icon">search</span>
-      <input type="text" placeholder="Rechercher partout..." class="search-input">
-      <div class="search-shortcut">
-        <span class="cmd-key">⌘</span>K
+      <input type="text" 
+             placeholder="Rechercher partout..." 
+             class="search-input"
+             [(ngModel)]="searchQuery"
+             (ngModelChange)="onSearchChange()"
+             (focus)="openSearch()"
+             (keydown)="onSearchKeydown($event)">
+      <div class="search-shortcut" *ngIf="!isSearchOpen">
+        <span class="cmd-key">Ctrl</span>K
+      </div>
+
+      <!-- Search Results Dropdown -->
+      <div class="search-dropdown" *ngIf="isSearchOpen && searchResults.length > 0">
+        <div class="search-result-item" 
+             *ngFor="let result of searchResults; let i = index"
+             [class.selected]="i === selectedIndex"
+             (click)="navigateTo(result)"
+             (mouseenter)="selectedIndex = i">
+          <div class="result-icon-wrap" [ngClass]="'type-' + result.type">
+            <span class="material-symbols-outlined">{{ result.icon }}</span>
+          </div>
+          <div class="result-info">
+            <div class="result-label">{{ result.label }}</div>
+            <div class="result-desc">{{ result.description }}</div>
+          </div>
+          <span class="result-type-badge">{{ getTypeLabel(result.type) }}</span>
+        </div>
+      </div>
+
+      <div class="search-dropdown search-empty" *ngIf="isSearchOpen && searchResults.length === 0 && searchQuery.length > 0">
+        <div class="empty-search-msg">
+          <span class="material-symbols-outlined">search_off</span>
+          <span>Aucun résultat pour "{{ searchQuery }}"</span>
+        </div>
       </div>
     </div>
   </div>
+
+  <!-- Search backdrop -->
+  <div class="search-backdrop" *ngIf="isSearchOpen" (click)="closeSearch()"></div>
 
   <div class="topbar-right">
     <!-- Theme Toggle -->
@@ -19,20 +53,39 @@
     <div class="notifications-container">
       <button class="icon-btn" aria-label="Notifications" (click)="toggleNotifications()">
         <span class="material-symbols-outlined">notifications</span>
-        <span class="badge" *ngIf="unreadMessages.length > 0">{{ unreadMessages.length }}</span>
+        <span class="badge" *ngIf="totalUnreadCount > 0">{{ totalUnreadCount }}</span>
       </button>
 
       <div class="dropdown-menu notifications-menu" *ngIf="isNotificationsOpen">
         <div class="dropdown-header">
           <div class="name">Notifications</div>
-          <div class="role" *ngIf="unreadMessages.length > 0">{{ unreadMessages.length }} nouveau(x) message(s)</div>
+          <div class="role" *ngIf="totalUnreadCount > 0">
+            <span *ngIf="unreadNotifsCount > 0">{{ unreadNotifsCount }} système </span>
+            <span *ngIf="unreadMessages.length > 0">{{ unreadMessages.length }} message(s)</span>
+          </div>
         </div>
         <div class="dropdown-divider"></div>
         
-        <div class="empty-notifications" *ngIf="unreadMessages.length === 0">
+        <div class="empty-notifications" *ngIf="totalUnreadCount === 0">
           Aucune nouvelle notification
         </div>
 
+        <!-- System Notifications -->
+        <div class="notification-list" *ngIf="systemNotifications.length > 0">
+          <div class="notification-item" *ngFor="let notif of systemNotifications" (click)="handleNotificationClick(notif)" [class.unread]="!notif.isRead">
+            <div class="notif-avatar" style="background-color: #e0f2fe; color: #0284c7; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+              <span class="material-symbols-outlined">{{ notif.type === 'PROJECT_CREATED' ? 'folder' : (notif.type === 'TASK_ASSIGNED' ? 'task' : 'info') }}</span>
+            </div>
+            <div class="notif-content">
+              <div class="notif-sender">{{ notif.title }}</div>
+              <div class="notif-text">{{ notif.message }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dropdown-divider" *ngIf="systemNotifications.length > 0 && unreadMessages.length > 0"></div>
+
+        <!-- Chat Messages -->
         <div class="notification-list" *ngIf="unreadMessages.length > 0">
           <div class="notification-item" *ngFor="let msg of unreadMessages" (click)="goToChat(msg)">
             <div class="notif-avatar">
@@ -48,10 +101,15 @@
           </div>
         </div>
         
-        <div class="dropdown-divider" *ngIf="unreadMessages.length > 0"></div>
-        <button class="dropdown-item text-primary" style="justify-content: center;" *ngIf="unreadMessages.length > 0" (click)="goToChat()">
-          Voir tous les messages
-        </button>
+        <div class="dropdown-divider" *ngIf="totalUnreadCount > 0"></div>
+        <div style="display: flex; justify-content: space-between; padding: 0 8px;">
+          <button class="dropdown-item text-primary" style="flex: 1; justify-content: center; font-size: 12px;" *ngIf="unreadNotifsCount > 0" (click)="markAllAsRead()">
+            Tout marquer comme lu
+          </button>
+          <button class="dropdown-item text-primary" style="flex: 1; justify-content: center; font-size: 12px;" *ngIf="unreadMessages.length > 0" (click)="goToChat()">
+            Ouvrir le Chat
+          </button>
+        </div>
       </div>
     </div>
     <button class="icon-btn" aria-label="Paramètres" *ngIf="currentUser?.role === 'SUPER_ADMIN'" (click)="openSettingsModal()">

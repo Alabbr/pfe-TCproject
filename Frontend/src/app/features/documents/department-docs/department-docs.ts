@@ -73,7 +73,7 @@ export class DepartmentDocs implements OnInit {
     this.isChefOfDepartment = isChefRole && user.departmentId === this.departmentId;
 
     // Check if interim of this department
-    this.http.get<any[]>('http://localhost:8080/api/interim/my-delegation').subscribe({
+    this.http.get<any[]>('/api/interim/my-delegation').subscribe({
       next: (dels) => {
         if (dels && dels.length > 0) {
           this.isInterimOfDepartment = dels.some((d: any) => d.departmentId === this.departmentId);
@@ -139,7 +139,7 @@ export class DepartmentDocs implements OnInit {
       params = params.set('documentType', this.selectedDocType);
     }
 
-    this.http.post('http://localhost:8080/api/documents/requests/create', null, { params }).subscribe({
+    this.http.post('/api/documents/requests/create', null, { params }).subscribe({
       next: () => {
         this.isRequesting = false;
         this.showRequestModal = false;

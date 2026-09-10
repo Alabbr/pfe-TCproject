@@ -49,7 +49,7 @@ export interface DocumentStatsResponse {
   providedIn: 'root'
 })
 export class DocumentService {
-  private apiUrl = 'http://localhost:8080/api/documents';
+  private apiUrl = '/api/documents';
 
   constructor(private http: HttpClient) {}
 

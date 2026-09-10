@@ -19,7 +19,7 @@ export class PublicDocumentsModalComponent implements OnInit {
   filteredDocuments: DocumentResponse[] = [];
   isLoading = true;
   searchQuery = '';
-  apiUrl = 'http://localhost:8080';
+  apiUrl = '';
 
   constructor(private documentService: DocumentService) {}
 

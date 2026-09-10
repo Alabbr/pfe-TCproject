@@ -7,7 +7,7 @@ import { JobPosition } from '../models/auth.model';
   providedIn: 'root'
 })
 export class JobPositionService {
-  private readonly API_URL = 'http://localhost:8080/api/job-positions';
+  private readonly API_URL = '/api/job-positions';
 
   constructor(private http: HttpClient) {}
 

@@ -47,6 +47,15 @@ public class ProjectDocumentController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + doc.getFileName() + "\"")
                 .body(new ByteArrayResource(doc.getData()));
     }
+
+    @GetMapping("/view/{id}")
+    public ResponseEntity<Resource> viewDocument(@PathVariable Long id) {
+        ProjectDocument doc = documentService.getDocument(id);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(doc.getFileType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + doc.getFileName() + "\"")
+                .body(new ByteArrayResource(doc.getData()));
+    }
     
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteDocument(@PathVariable Long id) {

@@ -1,10 +1,10 @@
-﻿# Angular
+# Angular
 Frontend/node_modules/
 Frontend/dist/
 Frontend/.angular/
 
 # Spring Boot
-Backend/target/
+Backend/TC-Project/target/
 
 # IDE
 **/.idea/
@@ -12,3 +12,18 @@ Backend/target/
 
 # Environment Variables
 .env.properties
+
+# Large files / PDFs (not suitable for git)
+Backend/TC-Project/RAG_pdf/
+RAG pdf/
+Backend/TC-Project/uploads/
+
+# Generated / binary files
+Backend/TC-Project/vector_store.json
+vector_store_backup.json
+GenHash.java
+
+# ML Service (large model files)
+ML-Service/
+FACT_DASHBOARD/
+Presentation_TC_Hub/

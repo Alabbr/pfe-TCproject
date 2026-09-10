@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/job-positions")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin(origins = "*")
 public class JobPositionController {
 
     private final JobPositionRepository jobPositionRepository;

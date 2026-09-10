@@ -1,5 +1,6 @@
 package org.example.gestionrh.tcproject.Services;
 
+import org.example.gestionrh.tcproject.Entities.Permission;
 import org.example.gestionrh.tcproject.Entities.Project;
 import org.example.gestionrh.tcproject.Entities.User;
 import org.example.gestionrh.tcproject.Repositories.ProjectRepository;
@@ -11,6 +12,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.example.gestionrh.tcproject.Entities.Task;
+import org.example.gestionrh.tcproject.Entities.TaskStatus;
+import org.example.gestionrh.tcproject.Entities.TaskPriority;
+import org.example.gestionrh.tcproject.Repositories.TaskRepository;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import java.lang.reflect.Type;
 import java.util.stream.Collectors;
 
 @Service
@@ -18,13 +26,27 @@ public class ProjectService {
     
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
+    private final WebSocketNotificationService notificationService;
+    private final GeminiService geminiService;
+    private final TaskRepository taskRepository;
 
-    public ProjectService(ProjectRepository projectRepository, UserRepository userRepository) {
+    public ProjectService(ProjectRepository projectRepository, UserRepository userRepository, 
+                          WebSocketNotificationService notificationService, GeminiService geminiService, TaskRepository taskRepository) {
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
+        this.geminiService = geminiService;
+        this.taskRepository = taskRepository;
     }
 
     public Project createProject(Map<String, Object> data, User creator) {
+        boolean isAdmin = creator.getRole().name().equals("SUPER_ADMIN") || creator.getRole().name().equals("DIRECTEUR_GENERAL");
+        boolean canManage = isAdmin || creator.getRole().name().equals("DIRECTEUR") ||
+                (creator.getPermissions() != null && creator.getPermissions().contains(Permission.MANAGE_PROJECTS));
+        if (!canManage) {
+            throw new RuntimeException("Non autorisé à créer un projet");
+        }
+
         Project project = new Project();
         project.setTitle((String) data.get("title"));
         project.setDescription((String) data.get("description"));
@@ -45,16 +67,40 @@ public class ProjectService {
             project.setMembers(members);
         }
         
-        return projectRepository.save(project);
+        Project saved = projectRepository.save(project);
+        
+        // Notify members
+        if (saved.getMembers() != null) {
+            for (User member : saved.getMembers()) {
+                if (!member.getId().equals(creator.getId())) {
+                    notificationService.sendToUser(
+                        member,
+                        "Nouveau Projet",
+                        creator.getFirstName() + " vous a ajouté au projet: " + saved.getTitle(),
+                        "PROJECT_CREATED",
+                        "/projects/" + saved.getId()
+                    );
+                }
+            }
+        }
+        
+        // Global notification (optional) - let's keep it to members to avoid spam
+        notificationService.sendGlobalNotification(
+            "Nouveau Projet", 
+            "Le projet '" + saved.getTitle() + "' a été créé par " + creator.getFirstName(), 
+            "PROJECT_CREATED", 
+            "/projects"
+        );
+        
+        return saved;
     }
 
     public List<Map<String, Object>> getAllProjectsForUser(User user) {
         List<Project> allProjects;
-        // If super admin or general director, maybe see all. But let's assume all users can see projects they created or are members of.
-        // For simplicity, let's just return all projects for now if they are admin, else only their projects.
         boolean isAdmin = user.getRole().name().equals("SUPER_ADMIN") || user.getRole().name().equals("DIRECTEUR_GENERAL");
+        boolean canManage = isAdmin || (user.getPermissions() != null && user.getPermissions().contains(Permission.MANAGE_PROJECTS));
         
-        if (isAdmin) {
+        if (canManage) {
             allProjects = projectRepository.findAll();
         } else {
             List<Project> created = projectRepository.findByCreatedBy(user);
@@ -77,14 +123,16 @@ public class ProjectService {
         
         boolean isCreator = project.getCreatedBy().getId().equals(user.getId());
         boolean isAdmin = user.getRole().name().equals("SUPER_ADMIN") || user.getRole().name().equals("DIRECTEUR_GENERAL");
+        boolean canManage = isAdmin || (user.getPermissions() != null && user.getPermissions().contains(Permission.MANAGE_PROJECTS));
         
-        if (!isCreator && !isAdmin) {
+        if (!isCreator && !canManage) {
             throw new RuntimeException("Non autorisé à modifier ce projet");
         }
 
         if (data.containsKey("title")) project.setTitle((String) data.get("title"));
         if (data.containsKey("description")) project.setDescription((String) data.get("description"));
         if (data.get("deadline") != null) project.setDeadline(LocalDate.parse(data.get("deadline").toString()));
+        if (data.get("startDate") != null) project.setStartDate(LocalDate.parse(data.get("startDate").toString()));
         
         List<?> rawMemberIds = (List<?>) data.get("memberIds");
         if (rawMemberIds != null) {
@@ -103,12 +151,66 @@ public class ProjectService {
         
         boolean isCreator = project.getCreatedBy().getId().equals(user.getId());
         boolean isAdmin = user.getRole().name().equals("SUPER_ADMIN") || user.getRole().name().equals("DIRECTEUR_GENERAL");
+        boolean canManage = isAdmin || (user.getPermissions() != null && user.getPermissions().contains(Permission.MANAGE_PROJECTS));
         
-        if (!isCreator && !isAdmin) {
+        if (!isCreator && !canManage) {
             throw new RuntimeException("Non autorisé à supprimer ce projet");
         }
         
         projectRepository.delete(project);
+    }
+
+    public List<Map<String, Object>> generateTasksFromAI(Long projectId, String prompt, User user) throws Exception {
+        Project project = projectRepository.findById(projectId).orElseThrow(() -> new RuntimeException("Projet introuvable"));
+        
+        boolean isCreator = project.getCreatedBy().getId().equals(user.getId());
+        boolean isAdmin = user.getRole().name().equals("SUPER_ADMIN") || user.getRole().name().equals("DIRECTEUR_GENERAL");
+        boolean canManage = isAdmin || (user.getPermissions() != null && user.getPermissions().contains(Permission.MANAGE_PROJECTS));
+        
+        if (!isCreator && !canManage) {
+            throw new RuntimeException("Non autorisé à générer des tâches pour ce projet");
+        }
+
+        String systemPrompt = "Tu es un chef de projet expert. Ton but est de générer une liste de tâches pour un projet basé sur la description de l'utilisateur. " +
+            "Tu dois renvoyer UNIQUEMENT un tableau JSON (pas de markdown, pas de texte avant ou après). " +
+            "Chaque objet du tableau doit avoir les champs suivants: 'title' (string, max 100 chars) et 'description' (string). " +
+            "Génère entre 4 et 8 tâches pertinentes.";
+
+        String aiResponse = geminiService.askRaw(systemPrompt, prompt);
+
+        // Nettoyer la réponse pour en extraire uniquement le JSON si le modèle a mis du markdown
+        if (aiResponse.contains("```json")) {
+            aiResponse = aiResponse.substring(aiResponse.indexOf("```json") + 7);
+        }
+        if (aiResponse.contains("```")) {
+            aiResponse = aiResponse.substring(0, aiResponse.lastIndexOf("```"));
+        }
+        aiResponse = aiResponse.trim();
+
+        Gson gson = new Gson();
+        Type listType = new TypeToken<List<Map<String, String>>>(){}.getType();
+        List<Map<String, String>> tasksData = gson.fromJson(aiResponse, listType);
+
+        List<Task> savedTasks = new ArrayList<>();
+        for (Map<String, String> tData : tasksData) {
+            Task task = new Task();
+            task.setProject(project);
+            task.setTitle(tData.get("title"));
+            task.setDescription(tData.get("description"));
+            task.setStatus(TaskStatus.A_FAIRE);
+            task.setPriority(TaskPriority.NORMALE);
+            task.setReporter(user);
+            savedTasks.add(taskRepository.save(task));
+        }
+
+        return savedTasks.stream().map(t -> {
+            Map<String, Object> dto = new HashMap<>();
+            dto.put("id", t.getId());
+            dto.put("title", t.getTitle());
+            dto.put("description", t.getDescription());
+            dto.put("status", t.getStatus());
+            return dto;
+        }).collect(Collectors.toList());
     }
 
     private Map<String, Object> mapToDTO(Project p) {

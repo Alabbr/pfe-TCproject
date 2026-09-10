@@ -90,7 +90,7 @@ export class Sidebar implements OnInit, OnDestroy {
 
   private checkInterimStatus() {
     if (!this.currentUser) return;
-    this.http.get<any[]>('http://localhost:8080/api/interim/my-delegation').subscribe({
+    this.http.get<any[]>('/api/interim/my-delegation').subscribe({
       next: (dels) => {
         if (dels && dels.length > 0) {
           this.isInterimActive = true;
@@ -170,6 +170,8 @@ export class Sidebar implements OnInit, OnDestroy {
     const hasDocAccess = isSuperAdmin || this.currentUser?.permissions?.includes('VIEW_DOCUMENTS') || this.currentUser?.permissions?.includes('MANAGE_DOCUMENTS');
     const hasBillingAccess = isSuperAdmin || this.currentUser?.permissions?.includes('VIEW_BILLING') || this.currentUser?.permissions?.includes('MANAGE_BILLING');
     const hasChatAccess = isSuperAdmin || this.currentUser?.permissions?.includes('VIEW_CHAT');
+    const hasProjectsAccess = isSuperAdmin || this.currentUser?.permissions?.includes('VIEW_PROJECTS') || this.currentUser?.permissions?.includes('MANAGE_PROJECTS');
+    const hasKbAccess = isSuperAdmin || this.currentUser?.permissions?.includes('MANAGE_KNOWLEDGE_BASE');
 
     const docSubItems: NavItem[] = this.departments.map(dept => ({
       label: dept.name.replace('Département ', '').replace('Direction ', 'Dir. '),
@@ -207,25 +209,25 @@ export class Sidebar implements OnInit, OnDestroy {
           }
         ]
       }] : []),
-      {
+      ...(hasProjectsAccess ? [{
         name: 'Projets',
         items: [
           { label: 'Tous les Projets', icon: 'folder_special', route: '/projects' },
           { label: 'Mes Missions', icon: 'assignment', route: '/project-tasks' }
         ]
-      },
+      }] : []),
       ...(hasChatAccess ? [{
         name: 'IA & Communication',
         items: [
           { label: 'Chat Inter-équipes', icon: 'chat', route: '/chat' },
           { label: 'Chatbot RAG', icon: 'smart_toy', route: '/rag' },
-          ...(isSuperAdmin ? [{ label: 'Base de Connaissances', icon: 'library_books', route: '/knowledge-base' }] : [])
+          ...(hasKbAccess ? [{ label: 'Base de Connaissances', icon: 'library_books', route: '/knowledge-base' }] : [])
         ]
       }] : []),
       ...(hasBillingAccess ? [{
         name: 'Finance',
         items: [
-          { label: 'Facturation IA', icon: 'receipt_long', route: '/billing' }
+          { label: 'Dashboard Facturation', icon: 'receipt_long', route: '/billing-dashboard' }
         ]
       }] : [])
     ];

@@ -20,7 +20,7 @@ export interface TransferRequest {
   providedIn: 'root'
 })
 export class TransferRequestService {
-  private apiUrl = 'http://localhost:8080/api/transfers';
+  private apiUrl = '/api/transfers';
 
   constructor(private http: HttpClient) { }
 

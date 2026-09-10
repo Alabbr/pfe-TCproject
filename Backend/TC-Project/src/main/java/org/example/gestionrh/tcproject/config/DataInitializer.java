@@ -45,23 +45,36 @@ public class DataInitializer implements CommandLineRunner {
                 List.of("Directeur Général", "Directeur Général Adjoint", "Sécurité", "Audit Interne"));
 
             // Initialize Admin User
-            // Initialize Admin User
-            User adminUser = userRepository.findByEmail("admin@tunisie-clearing.tn").orElse(null);
+            User adminUser = userRepository.findByEmail("alabbr55@gmail.com").orElse(null);
             if (adminUser == null) {
-                adminUser = User.builder()
-                        .firstName("Super")
-                        .lastName("Admin")
-                        .email("admin@tunisie-clearing.tn")
-                        .password(passwordEncoder.encode("Admin@TC2024"))
-                        .role(RoleName.SUPER_ADMIN)
-                        .department(ops)
-                        .permissions(Set.of(Permission.values()))
-                        .isActive(true)
-                        .build();
-                userRepository.save(adminUser);
+                // Also check old email in case of migration
+                adminUser = userRepository.findByEmail("admin@tunisie-clearing.tn").orElse(null);
+                if (adminUser != null) {
+                    adminUser.setEmail("alabbr55@gmail.com");
+                    adminUser.setPassword(passwordEncoder.encode("123456"));
+                    adminUser.setRole(RoleName.SUPER_ADMIN);
+                    adminUser.setPermissions(Set.of(Permission.values()));
+                    userRepository.save(adminUser);
+                } else {
+                    adminUser = User.builder()
+                            .firstName("Super")
+                            .lastName("Admin")
+                            .email("alabbr55@gmail.com")
+                            .password(passwordEncoder.encode("123456"))
+                            .role(RoleName.SUPER_ADMIN)
+                            .department(ops)
+                            .permissions(Set.of(Permission.values()))
+                            .isActive(true)
+                            .build();
+                    userRepository.save(adminUser);
+                }
             } else {
-                // Ensure it is always SUPER_ADMIN
+                // Ensure it is always SUPER_ADMIN with correct password
                 adminUser.setRole(RoleName.SUPER_ADMIN);
+                if (adminUser.getPassword() == null || adminUser.getPassword().isEmpty()) {
+                    adminUser.setPassword(passwordEncoder.encode("123456"));
+                }
+                adminUser.setPermissions(Set.of(Permission.values()));
                 userRepository.save(adminUser);
             }
             

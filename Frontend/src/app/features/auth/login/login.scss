@@ -21,21 +21,14 @@
 .branding {
   z-index: 2;
   
-  .logo-hexagon {
-    width: 64px;
-    height: 64px;
-    background-color: var(--color-accent);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  .logo-image {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    background-color: white;
+    border-radius: 12px;
+    padding: 6px;
     margin-bottom: var(--spacing-6);
-  }
-  
-  .logo-text {
-    font-weight: 700;
-    color: var(--color-primary);
-    font-size: 24px;
   }
   
   h1 {

@@ -6,7 +6,7 @@ import { Observable, tap } from 'rxjs';
   providedIn: 'root'
 })
 export class SettingService {
-  private readonly API_URL = 'http://localhost:8080/api/settings';
+  private readonly API_URL = '/api/settings';
 
   constructor(private http: HttpClient) {}
 

@@ -7,7 +7,7 @@ import { Department } from '../models/auth.model';
   providedIn: 'root'
 })
 export class DepartmentService {
-  private readonly API_URL = 'http://localhost:8080/api/departments';
+  private readonly API_URL = '/api/departments';
 
   constructor(private http: HttpClient) {}
 

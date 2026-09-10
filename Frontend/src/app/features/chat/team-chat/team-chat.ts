@@ -47,6 +47,13 @@ export class TeamChat implements OnInit, OnDestroy {
 
   // Hover menu
   hoveredMessageId: number | null = null;
+  
+  // Voice Recording
+  isRecording = false;
+  mediaRecorder: MediaRecorder | null = null;
+  audioChunks: Blob[] = [];
+  recordingTime = 0;
+  recordingInterval: any;
 
   private messageSub!: Subscription;
   private presenceSub!: Subscription;
@@ -257,7 +264,7 @@ export class TeamChat implements OnInit, OnDestroy {
   }
 
   sendMessage() {
-    if ((!this.newMessageText.trim() && !this.selectedFile) || this.isUploading) return;
+    if ((!this.newMessageText.trim() && !this.selectedFile) || this.isUploading || this.isRecording) return;
 
     if (this.selectedFile) {
       this.isUploading = true;
@@ -275,6 +282,83 @@ export class TeamChat implements OnInit, OnDestroy {
     } else {
       this.sendWebSocketMessage();
     }
+  }
+
+  // ---- Voice Recording ----
+  startRecording() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      alert("L'enregistrement audio n'est pas supporté par votre navigateur.");
+      return;
+    }
+
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+      this.isRecording = true;
+      this.audioChunks = [];
+      this.recordingTime = 0;
+      this.mediaRecorder = new MediaRecorder(stream);
+      
+      this.recordingInterval = setInterval(() => {
+        this.recordingTime++;
+      }, 1000);
+
+      this.mediaRecorder.ondataavailable = event => {
+        if (event.data.size > 0) {
+          this.audioChunks.push(event.data);
+        }
+      };
+
+      this.mediaRecorder.onstop = () => {
+        clearInterval(this.recordingInterval);
+        stream.getTracks().forEach(track => track.stop());
+        
+        if (this.audioChunks.length > 0 && this.isRecording) {
+          const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+          const file = new File([audioBlob], `vocal_${new Date().getTime()}.webm`, { type: 'audio/webm' });
+          this.uploadVoiceMessage(file);
+        }
+        this.isRecording = false;
+      };
+
+      this.mediaRecorder.start();
+    }).catch(err => {
+      console.error('Microphone access denied or error', err);
+      alert('Veuillez autoriser l\'accès au microphone pour envoyer des messages vocaux.');
+    });
+  }
+
+  stopRecording() {
+    if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+      this.mediaRecorder.stop();
+    }
+  }
+
+  cancelRecording() {
+    if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+      this.isRecording = false; // Prevents the upload in onstop
+      this.mediaRecorder.stop();
+      clearInterval(this.recordingInterval);
+    }
+  }
+
+  uploadVoiceMessage(file: File) {
+    this.isUploading = true;
+    this.chatService.uploadAttachment(file).subscribe({
+      next: (res) => {
+        this.isUploading = false;
+        // Even if Cloudinary returns 'raw' or 'video', we force it as 'audio' for voice messages
+        this.sendWebSocketMessage(res.url, 'Message vocal', 'audio');
+      },
+      error: (err) => {
+        console.error('Error uploading voice message', err);
+        this.isUploading = false;
+      }
+    });
+  }
+
+  formatRecordingTime(seconds: number): string {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
   }
 
   private sendWebSocketMessage(attachmentUrl?: string, attachmentName?: string, attachmentType?: string) {

@@ -7,7 +7,7 @@ import { Project, Task, TaskHistory, ProjectDocument } from './projects.models';
   providedIn: 'root'
 })
 export class ProjectService {
-  private apiUrl = 'http://localhost:8080/api';
+  private apiUrl = '/api';
 
   constructor(private http: HttpClient) {}
 
@@ -45,8 +45,27 @@ export class ProjectService {
     return this.http.post(`${this.apiUrl}/tasks`, data);
   }
 
-  updateTaskStatus(taskId: number, status: string, comment: string): Observable<any> {
+  generateTasksFromAI(projectId: number, prompt: string): Observable<any[]> {
+    return this.http.post<any[]>(`${this.apiUrl}/projects/${projectId}/generate-tasks`, { prompt });
+  }
+
+  updateTaskStatus(taskId: number, status: string, comment?: string): Observable<any> {
     return this.http.put(`${this.apiUrl}/tasks/${taskId}/status`, { status, comment });
+  }
+
+  updateTaskProgress(taskId: number, progress: number): Observable<any> {
+    return this.http.put(`${this.apiUrl}/tasks/${taskId}/progress`, { progress });
+  }
+
+  requestValidation(taskId: number, file: File | null, comment: string): Observable<any> {
+    const formData = new FormData();
+    if (file) {
+      formData.append('file', file);
+    }
+    if (comment) {
+      formData.append('comment', comment);
+    }
+    return this.http.post(`${this.apiUrl}/tasks/${taskId}/validation-request`, formData);
   }
 
   getTaskHistory(taskId: number): Observable<TaskHistory[]> {

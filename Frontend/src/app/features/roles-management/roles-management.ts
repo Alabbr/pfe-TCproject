@@ -18,13 +18,16 @@ import { ToastService } from '../../shared/services/toast';
 export class RolesManagementComponent implements OnInit {
   availablePermissions: string[] = [
     'VIEW_DASHBOARD', 'MANAGE_USERS', 'VIEW_DOCUMENTS', 'MANAGE_DOCUMENTS',
-    'USE_CHATBOT', 'VIEW_BILLING', 'MANAGE_BILLING', 'VIEW_CHAT', 'MANAGE_SETTINGS'
+    'USE_CHATBOT', 'VIEW_BILLING', 'MANAGE_BILLING', 'VIEW_CHAT',
+    'VIEW_PROJECTS', 'MANAGE_PROJECTS', 'MANAGE_KNOWLEDGE_BASE',
+    'MANAGE_SETTINGS'
   ];
 
   // Permissions a Chef de Département can toggle for their employees
   chefAllowedPermissions: string[] = [
     'VIEW_DASHBOARD', 'VIEW_DOCUMENTS', 'MANAGE_DOCUMENTS',
-    'USE_CHATBOT', 'VIEW_CHAT', 'VIEW_BILLING'
+    'USE_CHATBOT', 'VIEW_CHAT', 'VIEW_BILLING',
+    'VIEW_PROJECTS', 'MANAGE_PROJECTS'
   ];
   
   availableRoles: string[] = [
@@ -192,6 +195,9 @@ export class RolesManagementComponent implements OnInit {
       'VIEW_BILLING': 'Voir la facturation',
       'MANAGE_BILLING': 'Gérer la facturation',
       'VIEW_CHAT': 'Chat inter-équipes',
+      'VIEW_PROJECTS': 'Voir les projets & missions',
+      'MANAGE_PROJECTS': 'Gérer les projets (création, modif)',
+      'MANAGE_KNOWLEDGE_BASE': 'Gérer la base de connaissances (RAG)',
       'MANAGE_SETTINGS': 'Paramètres système'
     };
     return labels[perm] || perm.replace(/_/g, ' ');

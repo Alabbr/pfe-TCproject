@@ -15,7 +15,7 @@ export interface InterimDelegation {
   providedIn: 'root'
 })
 export class InterimService {
-  private apiUrl = 'http://localhost:8080/api/interim';
+  private apiUrl = '/api/interim';
 
   constructor(private http: HttpClient) {}
 

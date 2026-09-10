@@ -4,7 +4,7 @@
       <h1>Dossiers et Projets</h1>
       <p class="subtitle">Gérez vos missions et suivez l'avancement des dossiers.</p>
     </div>
-    <button class="btn-primary" (click)="showCreateModal = true">
+    <button class="btn-primary" (click)="showCreateModal = true" *ngIf="canCreateProject">
       <span class="material-symbols-outlined">add</span>
       Nouveau Projet
     </button>
@@ -54,6 +54,11 @@
       <textarea [(ngModel)]="newProject.description" rows="3"></textarea>
     </div>
     
+    <div class="form-group">
+      <label>Date de début</label>
+      <input type="date" [(ngModel)]="newProject.startDate">
+    </div>
+
     <div class="form-group">
       <label>Échéance (Date Limite)</label>
       <input type="date" [(ngModel)]="newProject.deadline">

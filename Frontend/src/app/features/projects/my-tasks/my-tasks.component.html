@@ -14,6 +14,7 @@
           <th>Projet (ID)</th>
           <th>Priorité</th>
           <th>Échéance</th>
+          <th>Avancement</th>
           <th>Statut</th>
           <th>Actions</th>
         </tr>
@@ -27,18 +28,44 @@
           <td>Projet #{{ t.projectId }}</td>
           <td><span class="badge" [ngClass]="t.priority.toLowerCase()">{{ t.priority }}</span></td>
           <td>{{ t.deadline | date:'dd MMM yyyy' }}</td>
+          <td>
+            <div class="progress-bar-mini">
+              <div class="progress-fill" [style.width.%]="t.progress || 0"></div>
+            </div>
+            <span class="progress-text">{{ t.progress || 0 }}%</span>
+          </td>
           <td><span class="badge status" [ngClass]="t.status.toLowerCase()">{{ t.status }}</span></td>
           <td>
-            <button class="btn-action start" *ngIf="t.status === 'A_FAIRE'" (click)="changeStatus(t, 'EN_COURS')">Commencer</button>
-            <button class="btn-action review" *ngIf="t.status === 'EN_COURS'" (click)="changeStatus(t, 'EN_VALIDATION')">Demander Validation</button>
+            <button class="btn-action start" *ngIf="t.status === 'A_FAIRE'" (click)="openStatusModal(t, 'EN_COURS')">Commencer</button>
+            <button class="btn-action review" *ngIf="t.status === 'EN_COURS'" (click)="openStatusModal(t, 'EN_VALIDATION')">Demander Validation</button>
             <span class="text-muted" *ngIf="t.status === 'EN_VALIDATION'">En attente de validation</span>
-            <span class="text-success" *ngIf="t.status === 'TERMINE'">Validée</span>
+            <span class="text-success" *ngIf="t.status === 'TERMINE'">Validée ✓</span>
           </td>
         </tr>
         <tr *ngIf="tasks.length === 0">
-          <td colspan="6" class="text-center">Aucune mission assignée.</td>
+          <td colspan="7" class="text-center">Aucune mission assignée.</td>
         </tr>
       </tbody>
     </table>
+  </div>
+</div>
+
+<!-- Modal Changement de Statut -->
+<div class="modal-overlay" *ngIf="showStatusModal">
+  <div class="modal-content">
+    <h2>{{ pendingStatus === 'EN_VALIDATION' ? 'Demande de Validation' : 'Changement de statut' }}</h2>
+    <p>Veuillez ajouter un commentaire pour justifier ce changement :</p>
+    <div class="form-group" *ngIf="pendingStatus === 'EN_VALIDATION'">
+      <label>Fichier de Validation (Document ou Preuve)</label>
+      <input type="file" (change)="onValidationFileSelected($event)">
+    </div>
+    <div class="form-group">
+      <label>Commentaire</label>
+      <textarea [(ngModel)]="statusComment" rows="3" placeholder="Ex: Tâche terminée, en attente de vérification..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" (click)="closeStatusModal()">Annuler</button>
+      <button class="btn-primary" (click)="confirmStatusChange()">Confirmer</button>
+    </div>
   </div>
 </div>

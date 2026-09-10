@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild, AfterViewChecked, OnInit } from '@angular/core';
+import { Component, ElementRef, ViewChild, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -23,7 +23,7 @@ interface Conversation {
   templateUrl: './rag-chat.html',
   styleUrl: './rag-chat.scss'
 })
-export class RagChatComponent implements OnInit, AfterViewChecked {
+export class RagChatComponent implements OnInit {
   @ViewChild('chatScroll') private chatScroll!: ElementRef;
 
   conversations: Conversation[] = [];
@@ -40,6 +40,8 @@ export class RagChatComponent implements OnInit, AfterViewChecked {
   newMessage = '';
   isLoading = false;
   isSidebarOpen = false;
+  isListening = false;
+  recognition: any;
 
   constructor(private http: HttpClient, private toastService: ToastService) {}
 
@@ -50,7 +52,7 @@ export class RagChatComponent implements OnInit, AfterViewChecked {
   deleteConversation(event: Event, id: number) {
     event.stopPropagation();
     if (confirm('Êtes-vous sûr de vouloir supprimer cette discussion ?')) {
-      this.http.delete(`http://localhost:8080/api/rag/conversations/${id}`).subscribe({
+      this.http.delete(`/api/rag/conversations/${id}`).subscribe({
         next: () => {
           this.toastService.success('Succès', 'Discussion supprimée.');
           if (this.currentConversationId === id) {
@@ -68,10 +70,69 @@ export class RagChatComponent implements OnInit, AfterViewChecked {
 
   ngOnInit() {
     this.loadConversations();
+    this.initSpeechRecognition();
+  }
+
+  initSpeechRecognition() {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      this.recognition = new SpeechRecognition();
+      this.recognition.continuous = true;
+      this.recognition.interimResults = true;
+      this.recognition.lang = 'fr-FR';
+
+      this.recognition.onstart = () => {
+        this.isListening = true;
+      };
+
+      this.recognition.onresult = (event: any) => {
+        let interimTranscript = '';
+        let finalTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
+        }
+        
+        if (finalTranscript) {
+           this.newMessage = (this.newMessage + ' ' + finalTranscript).trim() + ' ';
+        }
+      };
+
+      this.recognition.onerror = (event: any) => {
+        console.error('Speech recognition error', event.error);
+        this.isListening = false;
+      };
+
+      this.recognition.onend = () => {
+        this.isListening = false;
+      };
+    } else {
+      console.warn('Speech recognition not supported in this browser.');
+    }
+  }
+
+  toggleListening() {
+    if (this.isListening) {
+      this.recognition?.stop();
+    } else {
+      if (this.recognition) {
+        try {
+          this.recognition.start();
+        } catch (e) {
+          this.isListening = false;
+        }
+      } else {
+        this.toastService.error('Erreur', 'La reconnaissance vocale n\'est pas supportée par votre navigateur.');
+      }
+    }
   }
 
   loadConversations() {
-    this.http.get<Conversation[]>('http://localhost:8080/api/rag/conversations').subscribe(res => {
+    this.http.get<Conversation[]>('/api/rag/conversations').subscribe(res => {
       this.conversations = res;
     });
   }
@@ -87,22 +148,19 @@ export class RagChatComponent implements OnInit, AfterViewChecked {
 
   selectConversation(id: number) {
     this.currentConversationId = id;
-    this.http.get<any[]>(`http://localhost:8080/api/rag/conversations/${id}/messages`).subscribe({
+    this.http.get<any[]>(`/api/rag/conversations/${id}/messages`).subscribe({
       next: (res) => {
         this.messages = res.map(m => ({
           role: m.role,
           content: m.content,
           timestamp: new Date(m.createdAt)
         }));
+        setTimeout(() => this.scrollToBottom(), 50);
       },
       error: (err) => {
         this.toastService.error('Erreur', 'Impossible de charger la conversation.');
       }
     });
-  }
-
-  ngAfterViewChecked() {
-    this.scrollToBottom();
   }
 
   scrollToBottom(): void {
@@ -121,6 +179,7 @@ export class RagChatComponent implements OnInit, AfterViewChecked {
       content: text,
       timestamp: new Date()
     });
+    setTimeout(() => this.scrollToBottom(), 50);
     
     this.newMessage = '';
     this.isLoading = true;
@@ -131,7 +190,7 @@ export class RagChatComponent implements OnInit, AfterViewChecked {
     }
 
     // Call backend API
-    this.http.post<{answer: string, conversationId: number}>('http://localhost:8080/api/rag/chat', payload).subscribe({
+    this.http.post<{answer: string, conversationId: number}>('/api/rag/chat', payload).subscribe({
       next: (res) => {
         this.isLoading = false;
         this.messages.push({
@@ -139,6 +198,7 @@ export class RagChatComponent implements OnInit, AfterViewChecked {
           content: res.answer,
           timestamp: new Date()
         });
+        setTimeout(() => this.scrollToBottom(), 50);
         
         if (!this.currentConversationId && res.conversationId) {
           this.currentConversationId = res.conversationId;

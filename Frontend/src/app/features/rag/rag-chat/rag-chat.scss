@@ -382,6 +382,40 @@
           cursor: not-allowed;
         }
       }
+      
+      .btn-mic {
+        width: 44px;
+        height: 44px;
+        border-radius: 16px;
+        background: var(--color-bg-surface);
+        color: var(--color-text-muted);
+        border: 1px solid var(--color-border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        flex-shrink: 0;
+        margin-right: 8px;
+
+        &:hover:not([disabled]) {
+          background: var(--color-bg-white);
+          color: var(--color-primary);
+          border-color: var(--color-primary-light);
+        }
+
+        &.listening {
+          background: rgba(239, 68, 68, 0.1);
+          color: var(--color-danger);
+          border-color: rgba(239, 68, 68, 0.3);
+          animation: pulseMic 1.5s infinite;
+        }
+
+        &[disabled] {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+      }
     }
 
     .disclaimer {
@@ -401,4 +435,10 @@
 @keyframes bounce {
   0%, 80%, 100% { transform: scale(0); }
   40% { transform: scale(1); }
+}
+
+@keyframes pulseMic {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
 }

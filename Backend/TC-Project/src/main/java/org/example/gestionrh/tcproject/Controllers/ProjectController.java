@@ -64,4 +64,19 @@ public class ProjectController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
+
+    @PostMapping("/{id}/generate-tasks")
+    public ResponseEntity<?> generateTasksFromAI(@PathVariable Long id, @RequestBody Map<String, String> data, @AuthenticationPrincipal User currentUser) {
+        try {
+            String prompt = data.get("prompt");
+            if (prompt == null || prompt.isBlank()) {
+                throw new IllegalArgumentException("Prompt is missing");
+            }
+            List<Map<String, Object>> createdTasks = projectService.generateTasksFromAI(id, prompt, currentUser);
+            return ResponseEntity.ok(createdTasks);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
 }

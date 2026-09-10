@@ -8,7 +8,7 @@
         <span class="badge members">{{ project.members.length || 0 }} membres assignés</span>
       </div>
     </div>
-    <div class="header-actions">
+    <div class="header-actions" *ngIf="canManageProject">
       <button class="btn-icon" (click)="openEditModal()" title="Modifier le projet">
         <span class="material-symbols-outlined">edit</span>
       </button>
@@ -25,7 +25,7 @@
   </div>
 
   <div class="tab-content" *ngIf="activeTab === 'tasks'">
-    <div class="actions">
+    <div class="actions" *ngIf="canManageProject">
       <button class="btn-primary" (click)="showCreateTaskModal = true">
         <span class="material-symbols-outlined">add</span> Ajouter une mission
       </button>
@@ -35,12 +35,12 @@
       <!-- Colonne: À Faire -->
       <div class="kanban-col">
         <h3>À Faire <span class="count">{{ tasksTodo.length }}</span></h3>
-        <div class="task-card" *ngFor="let t of tasksTodo">
+        <div class="task-card" *ngFor="let t of tasksTodo" (click)="openTaskDetailsModal(t)">
           <h4>{{ t.title }}</h4>
           <span class="priority" [ngClass]="t.priority.toLowerCase()">{{ t.priority }}</span>
           <div class="assignee" *ngIf="t.assignee">Resp: {{ t.assignee.firstName }}</div>
           <div class="actions">
-            <button (click)="openStatusCommentModal(t, 'EN_COURS')">Commencer</button>
+            <button *ngIf="t.assignee?.id === authService.getCurrentUser()?.userId" (click)="openStatusCommentModal(t, 'EN_COURS'); $event.stopPropagation()">Commencer</button>
           </div>
         </div>
       </div>
@@ -48,12 +48,12 @@
       <!-- Colonne: En Cours -->
       <div class="kanban-col">
         <h3>En Cours <span class="count">{{ tasksInProgress.length }}</span></h3>
-        <div class="task-card in-progress" *ngFor="let t of tasksInProgress">
+        <div class="task-card in-progress" *ngFor="let t of tasksInProgress" (click)="openTaskDetailsModal(t)">
           <h4>{{ t.title }}</h4>
           <span class="priority" [ngClass]="t.priority.toLowerCase()">{{ t.priority }}</span>
           <div class="assignee" *ngIf="t.assignee">Resp: {{ t.assignee.firstName }}</div>
           <div class="actions">
-            <button (click)="openStatusCommentModal(t, 'EN_VALIDATION')">Demander Validation</button>
+            <button *ngIf="t.assignee?.id === authService.getCurrentUser()?.userId" (click)="openStatusCommentModal(t, 'EN_VALIDATION'); $event.stopPropagation()">Demander Validation</button>
           </div>
         </div>
       </div>
@@ -61,13 +61,13 @@
       <!-- Colonne: En Validation -->
       <div class="kanban-col">
         <h3>En Validation <span class="count">{{ tasksReview.length }}</span></h3>
-        <div class="task-card review" *ngFor="let t of tasksReview">
+        <div class="task-card review" *ngFor="let t of tasksReview" (click)="openTaskDetailsModal(t)">
           <h4>{{ t.title }}</h4>
           <span class="priority" [ngClass]="t.priority.toLowerCase()">{{ t.priority }}</span>
           <div class="assignee" *ngIf="t.assignee">Resp: {{ t.assignee.firstName }}</div>
-          <div class="actions">
-            <button class="btn-success" (click)="openStatusCommentModal(t, 'TERMINE')">Valider</button>
-            <button class="btn-danger" (click)="openStatusCommentModal(t, 'EN_COURS')">Rejeter</button>
+          <div class="actions" *ngIf="isProjectCreator">
+            <button class="btn-success" (click)="openStatusCommentModal(t, 'TERMINE'); $event.stopPropagation()">Valider</button>
+            <button class="btn-danger" (click)="openStatusCommentModal(t, 'EN_COURS'); $event.stopPropagation()">Rejeter</button>
           </div>
         </div>
       </div>
@@ -75,7 +75,7 @@
       <!-- Colonne: Terminé -->
       <div class="kanban-col">
         <h3>Terminé <span class="count">{{ tasksDone.length }}</span></h3>
-        <div class="task-card done" *ngFor="let t of tasksDone">
+        <div class="task-card done" *ngFor="let t of tasksDone" (click)="openTaskDetailsModal(t)">
           <h4>{{ t.title }}</h4>
           <div class="assignee" *ngIf="t.assignee">Fait par: {{ t.assignee.firstName }}</div>
         </div>
@@ -99,7 +99,14 @@
           <span class="name">{{ doc.fileName }}</span>
           <span class="date">Ajouté le {{ doc.uploadedAt | date:'dd MMM yyyy HH:mm' }}</span>
         </div>
-        <button class="btn-download" (click)="downloadDoc(doc.id)">Télécharger</button>
+        <div class="doc-actions">
+          <button class="btn-action" (click)="viewDoc(doc.id)" title="Visualiser">
+            <span class="material-symbols-outlined">visibility</span>
+          </button>
+          <button class="btn-action" (click)="downloadDoc(doc.id)" title="Télécharger">
+            <span class="material-symbols-outlined">download</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -131,6 +138,7 @@
       </div>
     </div>
   </div>
+
 </div>
 
 <!-- Modal Create Task -->
@@ -140,6 +148,10 @@
     <div class="form-group">
       <label>Titre</label>
       <input type="text" [(ngModel)]="newTask.title">
+    </div>
+    <div class="form-group">
+      <label>Date de début</label>
+      <input type="date" [(ngModel)]="newTask.startDate">
     </div>
     <div class="form-group">
       <label>Échéance (Date limite)</label>
@@ -216,6 +228,10 @@
   <div class="modal-content">
     <h2>Changement de statut</h2>
     <p>Veuillez ajouter un commentaire pour justifier ce changement :</p>
+    <div class="form-group" *ngIf="pendingStatusChange === 'EN_VALIDATION'">
+      <label>Fichier de Validation (Document ou Preuve)</label>
+      <input type="file" (change)="onValidationFileSelected($event)">
+    </div>
     <div class="form-group">
       <label>Commentaire</label>
       <textarea [(ngModel)]="statusComment" rows="3" placeholder="Ex: Tâche terminée, en attente de vérification..."></textarea>
@@ -223,6 +239,74 @@
     <div class="modal-actions">
       <button class="btn-secondary" (click)="closeStatusCommentModal()">Annuler</button>
       <button class="btn-primary" (click)="confirmStatusChange()">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Task Details -->
+<div class="modal-overlay" *ngIf="showTaskDetailsModal && selectedTaskDetails">
+  <div class="modal-content">
+    <h2>Détails de la mission</h2>
+    <div class="task-details-grid">
+      <div class="detail-item full-width">
+        <label>Titre</label>
+        <p>{{ selectedTaskDetails.title }}</p>
+      </div>
+      <div class="detail-item full-width">
+        <label>Description</label>
+        <p>{{ selectedTaskDetails.description || 'Aucune description' }}</p>
+      </div>
+      <div class="detail-row">
+        <div class="detail-item">
+          <label>Statut</label>
+          <p><span class="badge">{{ selectedTaskDetails.status }}</span></p>
+        </div>
+        <div class="detail-item">
+          <label>Priorité</label>
+          <p><span class="priority" [ngClass]="selectedTaskDetails.priority.toLowerCase()">{{ selectedTaskDetails.priority }}</span></p>
+        </div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-item">
+          <label>Date de début</label>
+          <p>{{ (selectedTaskDetails.startDate | date:'dd MMM yyyy') || 'Non définie' }}</p>
+        </div>
+        <div class="detail-item">
+          <label>Échéance</label>
+          <p>{{ (selectedTaskDetails.deadline | date:'dd MMM yyyy') || 'Non définie' }}</p>
+        </div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-item">
+          <label>Créée par</label>
+          <p>{{ selectedTaskDetails.reporter.firstName }} {{ selectedTaskDetails.reporter.lastName }}</p>
+        </div>
+        <div class="detail-item">
+          <label>Responsable</label>
+          <p>{{ selectedTaskDetails.assignee ? selectedTaskDetails.assignee.firstName + ' ' + selectedTaskDetails.assignee.lastName : 'Non assigné' }}</p>
+        </div>
+      </div>
+      
+      <div class="detail-row">
+        <div class="detail-item full-width">
+          <label>Avancement ({{ selectedTaskDetails.progress || 0 }}%)</label>
+          <input type="range" min="0" max="100" 
+                 [ngModel]="selectedTaskDetails.progress || 0" 
+                 (ngModelChange)="updateProgress(selectedTaskDetails, $event)"
+                 [disabled]="selectedTaskDetails.assignee?.id !== authService.getCurrentUser()?.userId || selectedTaskDetails.status === 'TERMINE'"
+                 style="width: 100%;">
+        </div>
+      </div>
+      
+      <div class="detail-row" *ngIf="selectedTaskDetails.validationAttachment">
+        <div class="detail-item full-width">
+          <label>Fichier de Validation</label>
+          <p><a [href]="selectedTaskDetails.validationAttachment" target="_blank" class="btn-primary" style="padding: 4px 8px; text-decoration: none; display: inline-block;">Voir le document joint</a></p>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-primary" (click)="closeTaskDetailsModal()">Fermer</button>
     </div>
   </div>
 </div>

@@ -79,6 +79,13 @@
         rows="1"
         [disabled]="isLoading">
       </textarea>
+      <button class="btn-mic" 
+              [class.listening]="isListening" 
+              (click)="toggleListening()" 
+              title="Dicter la question"
+              [disabled]="isLoading">
+        <span class="material-symbols-outlined">{{ isListening ? 'mic' : 'mic_none' }}</span>
+      </button>
       <button class="btn-send" (click)="sendMessage()" [disabled]="!newMessage.trim() || isLoading">
         <span class="material-symbols-outlined">send</span>
       </button>

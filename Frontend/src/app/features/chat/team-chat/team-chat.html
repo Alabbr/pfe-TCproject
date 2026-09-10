@@ -105,14 +105,19 @@
             <span class="msg-sender">{{ msg.senderName }}</span>
           </div>
 
-          <!-- Forwarded label -->
-          <div class="forwarded-label" *ngIf="msg.isForwarded">
-            <span class="material-symbols-outlined" style="font-size: 14px;">forward</span>
-            Transféré
-          </div>
-
           <div class="msg-bubble-wrapper">
+            <!-- Audio attachment display -->
+            <div class="audio-player" *ngIf="msg.attachmentUrl && msg.attachmentType === 'audio'">
+              <audio controls [src]="msg.attachmentUrl" style="max-width: 250px; height: 40px; outline: none;"></audio>
+            </div>
+
             <div class="msg-bubble" [class.with-attachment]="msg.attachmentUrl" [style.backgroundColor]="msg.senderId === currentUser.userId ? 'var(--color-primary)' : 'white'" [style.color]="msg.senderId === currentUser.userId ? 'white' : 'var(--color-text-main)'">
+              <!-- Forwarded label -->
+              <div class="forwarded-label" *ngIf="msg.isForwarded">
+                <span class="material-symbols-outlined" style="font-size: 14px;">forward</span>
+                Transféré
+              </div>
+
               <p *ngIf="msg.content">{{ msg.content }}</p>
               
               <!-- Pièces jointes -->
@@ -210,18 +215,44 @@
       </div>
 
       <div class="input-container">
-        <input type="file" #fileInput (change)="onFileSelected($event)" hidden>
-        <button class="attach-btn" (click)="fileInput.click()" *ngIf="!editingMessageId"><span class="material-symbols-outlined">attach_file</span></button>
-        <input type="text" [(ngModel)]="newMessageText" 
-               (keyup.enter)="editingMessageId ? submitEdit() : sendMessage()" 
-               [placeholder]="editingMessageId ? 'Modifier le message...' : (activeItemType === 'channel' ? 'Message dans #' + activeChannel?.name + '...' : 'Message à ' + activeDM?.name + '...')" 
-               [disabled]="isUploading">
-        <button class="emoji-btn"><span class="material-symbols-outlined">mood</span></button>
-        <button class="send-btn" (click)="editingMessageId ? submitEdit() : sendMessage()" [disabled]="isUploading">
-          <span *ngIf="!isUploading && !editingMessageId" class="material-symbols-outlined">send</span>
-          <span *ngIf="!isUploading && editingMessageId" class="material-symbols-outlined">check</span>
-          <span *ngIf="isUploading" class="material-symbols-outlined spinning-icon">hourglass_empty</span>
-        </button>
+        <!-- Recording UI -->
+        <div class="recording-ui" *ngIf="isRecording">
+          <div class="recording-indicator">
+            <span class="material-symbols-outlined recording-dot">fiber_manual_record</span>
+            <span class="recording-time">{{ formatRecordingTime(recordingTime) }}</span>
+          </div>
+          <div class="recording-actions">
+            <button class="cancel-record-btn" (click)="cancelRecording()" title="Annuler">
+              <span class="material-symbols-outlined">delete</span>
+            </button>
+            <button class="stop-record-btn" (click)="stopRecording()" title="Envoyer">
+              <span class="material-symbols-outlined">send</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Normal Input UI -->
+        <ng-container *ngIf="!isRecording">
+          <input type="file" #fileInput (change)="onFileSelected($event)" hidden>
+          <button class="attach-btn" (click)="fileInput.click()" *ngIf="!editingMessageId"><span class="material-symbols-outlined">attach_file</span></button>
+          
+          <input type="text" [(ngModel)]="newMessageText" 
+                 (keyup.enter)="editingMessageId ? submitEdit() : sendMessage()" 
+                 [placeholder]="editingMessageId ? 'Modifier le message...' : (activeItemType === 'channel' ? 'Message dans #' + activeChannel?.name + '...' : 'Message à ' + activeDM?.name + '...')" 
+                 [disabled]="isUploading">
+                 
+          <button class="emoji-btn"><span class="material-symbols-outlined">mood</span></button>
+          
+          <button class="mic-btn" (click)="startRecording()" *ngIf="!newMessageText.trim() && !editingMessageId && !isUploading" title="Message vocal">
+            <span class="material-symbols-outlined">mic</span>
+          </button>
+          
+          <button class="send-btn" (click)="editingMessageId ? submitEdit() : sendMessage()" [disabled]="isUploading" *ngIf="newMessageText.trim() || editingMessageId || isUploading || selectedFile">
+            <span *ngIf="!isUploading && !editingMessageId" class="material-symbols-outlined">send</span>
+            <span *ngIf="!isUploading && editingMessageId" class="material-symbols-outlined">check</span>
+            <span *ngIf="isUploading" class="material-symbols-outlined spinning-icon">hourglass_empty</span>
+          </button>
+        </ng-container>
       </div>
     </div>
   </div>
