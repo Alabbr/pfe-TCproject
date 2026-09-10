@@ -32,6 +32,22 @@ pipeline {
             }
         }
 
+        stage('Tests Backend (Maven)') {
+            steps {
+                dir('Backend/TC-Project') {
+                    bat 'mvnw.cmd test'
+                }
+            }
+        }
+
+        stage('Tests Frontend (Karma)') {
+            steps {
+                dir('Frontend') {
+                    bat 'npm run test -- --watch=false --browsers=ChromeHeadless'
+                }
+            }
+        }
+
         stage('Build Docker Images') {
             steps {
                 // Build Backend Image

@@ -194,6 +194,12 @@
             <artifactId>langchain4j-embeddings-all-minilm-l6-v2</artifactId>
             <version>0.35.0</version>
         </dependency>
+        <!-- H2 Database for Testing -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
 
