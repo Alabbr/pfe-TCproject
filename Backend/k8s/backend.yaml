@@ -22,23 +22,14 @@ spec:
           volumeMounts:
             - name: rag-storage
               mountPath: /app/data
+          envFrom:
+            - secretRef:
+                name: pfe-secrets
           env:
             - name: SPRING_DATASOURCE_URL
               value: "jdbc:postgresql://postgres-service:5432/tc_hub_db"
             - name: ML_SERVICE_URL
               value: "http://ml-service:5000"
-            - name: GROQ_API_KEY
-              value: "YOUR_GROQ_API_KEY_HERE"
-            - name: CLOUDINARY_API_KEY
-              value: "YOUR_CLOUDINARY_API_KEY_HERE"
-            - name: CLOUDINARY_API_SECRET
-              value: "YOUR_CLOUDINARY_API_SECRET_HERE"
-            - name: APP_PASSWORD
-              value: "YOUR_EMAIL_APP_PASSWORD_HERE"
-            - name: GEMINI_API_KEY
-              value: "YOUR_GEMINI_API_KEY_HERE"
-            - name: LLAMAPARSE_API_KEY
-              value: "YOUR_LLAMAPARSE_API_KEY_HERE"
       volumes:
         - name: rag-storage
           persistentVolumeClaim:
