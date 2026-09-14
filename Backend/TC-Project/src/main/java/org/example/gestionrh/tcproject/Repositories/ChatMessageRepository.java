@@ -2,6 +2,7 @@ package org.example.gestionrh.tcproject.Repositories;
 
 import org.example.gestionrh.tcproject.Entities.ChatMessage;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -13,4 +14,8 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
 
     @Query("SELECT m FROM ChatMessage m WHERE (m.sender.id = :user1 AND m.receiver.id = :user2) OR (m.sender.id = :user2 AND m.receiver.id = :user1) ORDER BY m.timestamp ASC")
     List<ChatMessage> findDirectMessages(@Param("user1") Long user1, @Param("user2") Long user2);
+
+    @Modifying
+    @Query("DELETE FROM ChatMessage c WHERE c.sender.id = :userId OR c.receiver.id = :userId")
+    void deleteAllByUserId(@Param("userId") Long userId);
 }

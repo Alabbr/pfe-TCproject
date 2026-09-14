@@ -24,6 +24,22 @@ public class UserService {
     private final org.example.gestionrh.tcproject.Repositories.JobPositionRepository jobPositionRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    
+    // Injections for cascade delete
+    private final org.example.gestionrh.tcproject.Repositories.ChatMessageRepository chatMessageRepository;
+    private final org.example.gestionrh.tcproject.Repositories.MessageReactionRepository messageReactionRepository;
+    private final org.example.gestionrh.tcproject.Repositories.DocumentRecipientRepository documentRecipientRepository;
+    private final org.example.gestionrh.tcproject.Repositories.DocumentRepository documentRepository;
+    private final org.example.gestionrh.tcproject.Repositories.DocumentRequestRepository documentRequestRepository;
+    private final org.example.gestionrh.tcproject.Repositories.InterimDelegationRepository interimDelegationRepository;
+    private final org.example.gestionrh.tcproject.Repositories.ProjectDocumentRepository projectDocumentRepository;
+    private final org.example.gestionrh.tcproject.Repositories.RagMessageRepository ragMessageRepository;
+    private final org.example.gestionrh.tcproject.Repositories.RagConversationRepository ragConversationRepository;
+    private final org.example.gestionrh.tcproject.Repositories.SystemNotificationRepository systemNotificationRepository;
+    private final org.example.gestionrh.tcproject.Repositories.TaskHistoryRepository taskHistoryRepository;
+    private final org.example.gestionrh.tcproject.Repositories.TaskRepository taskRepository;
+    private final org.example.gestionrh.tcproject.Repositories.TransferRequestRepository transferRequestRepository;
+    private final org.example.gestionrh.tcproject.Repositories.ProjectRepository projectRepository;
 
     // Retourne tous les utilisateurs actifs
     public List<UserResponse> getAllUsers() {
@@ -140,7 +156,48 @@ public class UserService {
         if (user.isActive()) {
             throw new RuntimeException("Seuls les utilisateurs archivés peuvent être supprimés définitivement.");
         }
+
+        // 1. Chat & Reactions
+        messageReactionRepository.deleteAllByUserId(id);
+        messageReactionRepository.deleteAllByMessageUserId(id);
+        chatMessageRepository.deleteAllByUserId(id);
+
+        // 2. RAG IA
+        ragMessageRepository.deleteAllByConversationUserId(id);
+        ragConversationRepository.deleteAllByUserId(id);
+
+        // 3. Notifications
+        systemNotificationRepository.deleteAllByUserId(id);
+
+        // 4. Documents & Requêtes
+        documentRecipientRepository.nullifyValidatorByUserId(id);
+        documentRecipientRepository.deleteAllByRecipientId(id);
+        documentRecipientRepository.deleteAllByDocumentUploaderId(id);
+        documentRepository.deleteAllByUploaderId(id);
+        
+        documentRequestRepository.nullifyAssignedToByUserId(id);
+        documentRequestRepository.nullifyDelegatedToByUserId(id);
+        documentRequestRepository.deleteAllByRequesterId(id);
+
+        // 5. Tâches
+        taskHistoryRepository.deleteAllByChangedById(id);
+        taskRepository.nullifyAssigneeByUserId(id);
+        taskRepository.nullifyReporterByUserId(id);
+
+        // 6. Projets
+        projectDocumentRepository.deleteAllByUploadedById(id);
+        projectRepository.removeUserFromAllProjects(id);
+        projectRepository.nullifyCreatedByUserId(id);
+
+        // 7. RH (Intérim & Mutations)
+        interimDelegationRepository.deleteAllByUserId(id);
+        transferRequestRepository.nullifyDecidedByUserId(id);
+        transferRequestRepository.deleteAllByUserId(id);
+
+        // 8. Suppression finale du User (la collection permissions est auto-gérée par JPA)
         userRepository.deleteById(id);
+        
+        System.out.println("Utilisateur " + id + " supprimé définitivement avec toutes ses dépendances.");
     }
 
     // Retourne tous les utilisateurs d'un département spécifique

@@ -2,7 +2,9 @@ package org.example.gestionrh.tcproject.Repositories;
 
 import org.example.gestionrh.tcproject.Entities.DocumentRecipient;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -30,4 +32,16 @@ public interface DocumentRecipientRepository extends JpaRepository<DocumentRecip
 
     @Query("SELECT dr FROM DocumentRecipient dr WHERE dr.document.uploader.id = :uploaderId ORDER BY dr.document.uploadDate DESC")
     List<DocumentRecipient> findByDocumentUploaderIdOrderByDocumentUploadDateDesc(Long uploaderId);
+
+    @Modifying
+    @Query("DELETE FROM DocumentRecipient dr WHERE dr.recipient.id = :userId")
+    void deleteAllByRecipientId(@Param("userId") Long userId);
+
+    @Modifying
+    @Query("DELETE FROM DocumentRecipient dr WHERE dr.document.id IN (SELECT d.id FROM Document d WHERE d.uploader.id = :userId)")
+    void deleteAllByDocumentUploaderId(@Param("userId") Long userId);
+
+    @Modifying
+    @Query("UPDATE DocumentRecipient dr SET dr.validator = NULL WHERE dr.validator.id = :userId")
+    void nullifyValidatorByUserId(@Param("userId") Long userId);
 }

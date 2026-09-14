@@ -2,6 +2,7 @@ package org.example.gestionrh.tcproject.Repositories;
 
 import org.example.gestionrh.tcproject.Entities.InterimDelegation;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -15,4 +16,8 @@ public interface InterimDelegationRepository extends JpaRepository<InterimDelega
 
     @Query("SELECT i FROM InterimDelegation i WHERE i.interim.id = :interimId AND i.isActive = true AND i.startDate <= :currentDate AND i.endDate >= :currentDate")
     List<InterimDelegation> findActiveDelegationsForInterim(@Param("interimId") Long interimId, @Param("currentDate") LocalDate currentDate);
+
+    @Modifying
+    @Query("DELETE FROM InterimDelegation i WHERE i.delegator.id = :userId OR i.interim.id = :userId")
+    void deleteAllByUserId(@Param("userId") Long userId);
 }
